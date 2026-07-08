@@ -89,6 +89,13 @@ pip install -e .
 pip install pytest
 ```
 
+### 4. PowerShell Shortcut Setup (Windows)
+To run the `examai` command directly from anywhere in your PowerShell without prefixing the virtual environment path, execute:
+```powershell
+irm https://raw.githubusercontent.com/adityasing9/examai-cli/master/install.ps1 | iex
+```
+This script adds the local executable folder to your User `PATH` permanently and registers the `examai` alias in your current terminal session immediately.
+
 ---
 
 ## ⚙️ Configuration

@@ -632,5 +632,19 @@ def about():
     console.print(Panel(about_text, border_style="magenta", box=ROUNDED, title="🎓 About ExamAI CLI"))
 
 
+# Global exception hook to prevent raw tracebacks from leaking to end users
+def _custom_excepthook(exc_type, exc_value, exc_tb):
+    """Suppress raw tracebacks and show clean error messages."""
+    if exc_type == KeyboardInterrupt:
+        console.print("\n[yellow]Operation cancelled.[/yellow]")
+        return
+    console.print(f"\n[bold red]Error:[/bold red] {exc_value}")
+    logger = __import__('examai.utils.logger', fromlist=['logger']).logger
+    import traceback
+    logger.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))
+
+sys.excepthook = _custom_excepthook
+
+
 if __name__ == "__main__":
     app()

@@ -39,11 +39,24 @@ class AIClient:
             except httpx.HTTPStatusError as e:
                 logger.error(f"OpenRouter HTTP Error (Attempt {attempt+1}/{max_retries}): {e.response.text}")
                 if attempt == max_retries - 1:
-                    raise e
+                    status_code = e.response.status_code
+                    if status_code == 402:
+                        raise RuntimeError(
+                            f"OpenRouter returned 402 Payment Required. Your account has no credits. "
+                            f"Add credits at https://openrouter.ai/credits or switch to a free model with: "
+                            f"examai settings set openrouter_model \"openrouter/auto\""
+                        ) from None
+                    elif status_code == 404:
+                        raise RuntimeError(
+                            f"OpenRouter returned 404 Not Found for model '{model}'. "
+                            f"The model name may be incorrect. Check available models at https://openrouter.ai/models"
+                        ) from None
+                    else:
+                        raise RuntimeError(f"OpenRouter API error ({e.response.status_code}): {e.response.text}") from None
             except (httpx.RequestError, Exception) as e:
                 logger.error(f"OpenRouter connection/request error (Attempt {attempt+1}/{max_retries}): {e}")
                 if attempt == max_retries - 1:
-                    raise e
+                    raise RuntimeError(f"OpenRouter connection failed: {e}") from None
             time.sleep(backoff ** attempt)
         
         raise RuntimeError("Failed to get response from OpenRouter after retries.")
@@ -69,7 +82,7 @@ class AIClient:
                     raise ValueError(f"Unexpected response format from Ollama: {resp_data}")
         except Exception as e:
             logger.error(f"Ollama connection error: {e}")
-            raise RuntimeError(f"Ollama server at {host} is unreachable or returned an error: {e}")
+            raise RuntimeError(f"Ollama server at {host} is unreachable or returned an error: {e}") from None
 
     def generate_completion(
         self, 
@@ -112,7 +125,7 @@ class AIClient:
                     # If both fail, raise the original OpenRouter error
                     raise RuntimeError(
                         f"Both OpenRouter and Ollama fallback failed. OpenRouter error: {e}. Ollama error: {fallback_err}"
-                    )
+                    ) from None
         else:
             m = model or settings.ollama_model
             res = self._call_ollama(messages, m, settings.ollama_host)

@@ -43,8 +43,8 @@ class AIClient:
                     if status_code == 402:
                         raise RuntimeError(
                             f"OpenRouter returned 402 Payment Required. Your account has no credits. "
-                            f"Add credits at https://openrouter.ai/credits or switch to a free model with: "
-                            f"examai settings set openrouter_model \"openrouter/auto\""
+                            f"Add credits at https://openrouter.ai/credits or switch to free Gemini provider with: "
+                            f"examai settings set provider \"gemini\""
                         ) from None
                     elif status_code == 404:
                         raise RuntimeError(
@@ -60,6 +60,54 @@ class AIClient:
             time.sleep(backoff ** attempt)
         
         raise RuntimeError("Failed to get response from OpenRouter after retries.")
+
+    def _call_gemini(self, messages: List[Dict[str, str]], model: str, api_key: str) -> str:
+        """Call Google AI Studio (Gemini) REST API directly. Free tier supported."""
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        
+        # Convert OpenAI-style messages to Gemini format
+        gemini_contents = []
+        system_instruction = None
+        for msg in messages:
+            role = msg["role"]
+            content = msg["content"]
+            if role == "system":
+                # Gemini uses systemInstruction separately
+                system_instruction = content
+            elif role == "user":
+                gemini_contents.append({"role": "user", "parts": [{"text": content}]})
+            elif role == "assistant":
+                gemini_contents.append({"role": "model", "parts": [{"text": content}]})
+        
+        data = {"contents": gemini_contents}
+        if system_instruction:
+            data["systemInstruction"] = {"parts": [{"text": system_instruction}]}
+        
+        try:
+            with httpx.Client(timeout=60.0) as client:
+                response = client.post(url, json=data)
+                response.raise_for_status()
+                resp_data = response.json()
+                
+                if "candidates" in resp_data and len(resp_data["candidates"]) > 0:
+                    candidate = resp_data["candidates"][0]
+                    if "content" in candidate and "parts" in candidate["content"]:
+                        return candidate["content"]["parts"][0]["text"]
+                
+                raise ValueError(f"Unexpected response format from Gemini: {resp_data}")
+        except httpx.HTTPStatusError as e:
+            status_code = e.response.status_code
+            if status_code == 400:
+                raise RuntimeError(f"Gemini API error: Invalid request. Check your API key and model name '{model}'.") from None
+            elif status_code == 403:
+                raise RuntimeError(f"Gemini API key is invalid or doesn't have access. Get a free key at https://aistudio.google.com/apikey") from None
+            elif status_code == 429:
+                raise RuntimeError(f"Gemini rate limit exceeded. Wait a moment and try again.") from None
+            else:
+                raise RuntimeError(f"Gemini API error ({status_code}): {e.response.text}") from None
+        except Exception as e:
+            logger.error(f"Gemini connection error: {e}")
+            raise RuntimeError(f"Gemini API call failed: {e}") from None
 
     def _call_ollama(self, messages: List[Dict[str, str]], model: str, host: str) -> str:
         """Call local Ollama instance API to generate completions."""
@@ -84,6 +132,33 @@ class AIClient:
             logger.error(f"Ollama connection error: {e}")
             raise RuntimeError(f"Ollama server at {host} is unreachable or returned an error: {e}") from None
 
+    def _try_fallbacks(self, messages: List[Dict[str, str]], primary_error: str, skip_provider: str = "") -> Tuple[str, str, str]:
+        """Try fallback providers: Gemini → Ollama. Returns (content, provider, model) or raises."""
+        settings = get_settings()
+        errors = [primary_error]
+        
+        # Try Gemini fallback (if not the primary)
+        if skip_provider != "gemini" and settings.gemini_api_key:
+            try:
+                gemini_model = settings.gemini_model
+                logger.info("Falling back to Gemini...")
+                res = self._call_gemini(messages, gemini_model, settings.gemini_api_key)
+                return res, "gemini (fallback)", gemini_model
+            except Exception as e:
+                errors.append(f"Gemini: {e}")
+        
+        # Try Ollama fallback (if not the primary)
+        if skip_provider != "ollama":
+            try:
+                ollama_model = settings.ollama_model
+                logger.info("Falling back to Ollama...")
+                res = self._call_ollama(messages, ollama_model, settings.ollama_host)
+                return res, "ollama (fallback)", ollama_model
+            except Exception as e:
+                errors.append(f"Ollama: {e}")
+        
+        raise RuntimeError(" | ".join(errors)) from None
+
     def generate_completion(
         self, 
         messages: List[Dict[str, str]], 
@@ -92,43 +167,51 @@ class AIClient:
     ) -> Tuple[str, str, str]:
         """
         Generates completions and returns a tuple: (content, final_provider, final_model)
-        Falls back to local Ollama if OpenRouter fails/is offline.
+        Falls back through available providers if the primary fails.
+        Fallback chain: primary → gemini → ollama
         """
         settings = get_settings()
         prov = (provider or settings.default_provider).lower()
         
-        if prov == "openrouter":
+        if prov == "gemini":
+            m = model or settings.gemini_model
+            api_key = settings.gemini_api_key
+            
+            if not api_key:
+                raise RuntimeError(
+                    "Gemini API key is not configured. Get a free key at https://aistudio.google.com/apikey "
+                    "then run: examai settings set gemini_api_key \"YOUR_KEY\""
+                ) from None
+            
+            try:
+                res = self._call_gemini(messages, m, api_key)
+                return res, "gemini", m
+            except Exception as e:
+                logger.warning(f"Gemini request failed: {e}. Trying fallbacks...")
+                return self._try_fallbacks(messages, f"Gemini: {e}", skip_provider="gemini")
+        
+        elif prov == "openrouter":
             m = model or settings.openrouter_model
             api_key = settings.openrouter_api_key
             
             if not api_key:
-                logger.warning("OpenRouter API key is missing. Automatically falling back to local Ollama.")
-                # Fallback to Ollama
-                try:
-                    ollama_model = settings.ollama_model
-                    res = self._call_ollama(messages, ollama_model, settings.ollama_host)
-                    return res, "ollama (fallback)", ollama_model
-                except Exception as e:
-                    raise ValueError("OpenRouter API key is not configured, and local Ollama connection failed. Please configure settings.")
+                logger.warning("OpenRouter API key is missing. Trying fallbacks...")
+                return self._try_fallbacks(messages, "OpenRouter API key is not configured", skip_provider="openrouter")
             
             try:
                 res = self._call_openrouter(messages, m, api_key)
                 return res, "openrouter", m
             except Exception as e:
-                logger.warning(f"OpenRouter request failed: {e}. Falling back to Ollama.")
-                # Attempt fallback to Ollama
-                try:
-                    ollama_model = settings.ollama_model
-                    res = self._call_ollama(messages, ollama_model, settings.ollama_host)
-                    return res, "ollama (fallback)", ollama_model
-                except Exception as fallback_err:
-                    # If both fail, raise the original OpenRouter error
-                    raise RuntimeError(
-                        f"Both OpenRouter and Ollama fallback failed. OpenRouter error: {e}. Ollama error: {fallback_err}"
-                    ) from None
-        else:
+                logger.warning(f"OpenRouter request failed: {e}. Trying fallbacks...")
+                return self._try_fallbacks(messages, f"OpenRouter: {e}", skip_provider="openrouter")
+        
+        else:  # ollama
             m = model or settings.ollama_model
-            res = self._call_ollama(messages, m, settings.ollama_host)
-            return res, "ollama", m
+            try:
+                res = self._call_ollama(messages, m, settings.ollama_host)
+                return res, "ollama", m
+            except Exception as e:
+                logger.warning(f"Ollama request failed: {e}. Trying fallbacks...")
+                return self._try_fallbacks(messages, f"Ollama: {e}", skip_provider="ollama")
 
 ai_client = AIClient()

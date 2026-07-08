@@ -554,18 +554,22 @@ def settings_view():
     table.add_column("Setting Option", style="bold magenta")
     table.add_column("Value", style="bold white")
     
-    # Mask API key for security
-    api_key = settings.openrouter_api_key
-    masked_key = api_key[:6] + "..." + api_key[-4:] if len(api_key) > 10 else "Not Configured ❌"
+    # Mask API keys for security
+    or_key = settings.openrouter_api_key
+    masked_or = or_key[:6] + "..." + or_key[-4:] if len(or_key) > 10 else "Not Configured ❌"
+    gm_key = settings.gemini_api_key
+    masked_gm = gm_key[:6] + "..." + gm_key[-4:] if len(gm_key) > 10 else "Not Configured ❌"
     
     table.add_row("Database Host", settings.db_host)
     table.add_row("Database Port", str(settings.db_port))
     table.add_row("Database User", settings.db_user)
     table.add_row("Database Name", settings.db_name)
-    table.add_row("OpenRouter Key", masked_key)
-    table.add_row("Ollama Host", settings.ollama_host)
-    table.add_row("Default Provider", settings.default_provider)
+    table.add_row("Default Provider", f"[bold green]{settings.default_provider}[/bold green]")
+    table.add_row("Gemini API Key", masked_gm)
+    table.add_row("Gemini Model", settings.gemini_model)
+    table.add_row("OpenRouter Key", masked_or)
     table.add_row("OpenRouter Model", settings.openrouter_model)
+    table.add_row("Ollama Host", settings.ollama_host)
     table.add_row("Ollama Model", settings.ollama_model)
     table.add_row("Theme Style", settings.theme)
     table.add_row("Language", settings.language)
@@ -582,8 +586,8 @@ def settings_set(
     key_upper = key.upper()
     valid_keys = [
         "DB_HOST", "DB_PORT", "DB_USER", "DB_PASSWORD", "DB_NAME",
-        "OPENROUTER_API_KEY", "OLLAMA_HOST", "DEFAULT_PROVIDER",
-        "OPENROUTER_MODEL", "OLLAMA_MODEL", "THEME", "LANGUAGE"
+        "OPENROUTER_API_KEY", "GEMINI_API_KEY", "OLLAMA_HOST", "DEFAULT_PROVIDER",
+        "OPENROUTER_MODEL", "GEMINI_MODEL", "OLLAMA_MODEL", "THEME", "LANGUAGE"
     ]
     
     # Automatically map simple setting names to exact env keys
@@ -593,11 +597,15 @@ def settings_set(
         "user": "DB_USER",
         "password": "DB_PASSWORD",
         "db": "DB_NAME",
-        "api_key": "OPENROUTER_API_KEY",
+        "api_key": "GEMINI_API_KEY",
+        "gemini_api_key": "GEMINI_API_KEY",
+        "gemini_key": "GEMINI_API_KEY",
+        "openrouter_api_key": "OPENROUTER_API_KEY",
         "openrouter_key": "OPENROUTER_API_KEY",
         "ollama_host": "OLLAMA_HOST",
         "provider": "DEFAULT_PROVIDER",
         "openrouter_model": "OPENROUTER_MODEL",
+        "gemini_model": "GEMINI_MODEL",
         "ollama_model": "OLLAMA_MODEL",
         "theme": "THEME",
         "language": "LANGUAGE"

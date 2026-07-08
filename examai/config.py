@@ -20,9 +20,11 @@ if not ENV_PATH.exists():
             "DB_PASSWORD=\n"
             "DB_NAME=examai\n"
             "OPENROUTER_API_KEY=\n"
+            "GEMINI_API_KEY=\n"
             "OLLAMA_HOST=http://localhost:11434\n"
-            "DEFAULT_PROVIDER=openrouter\n"
+            "DEFAULT_PROVIDER=gemini\n"
             "OPENROUTER_MODEL=google/gemini-2.5-flash\n"
+            "GEMINI_MODEL=gemini-2.5-flash\n"
             "OLLAMA_MODEL=llama3\n"
             "THEME=cyber\n"
             "LANGUAGE=english\n"
@@ -39,10 +41,12 @@ class Settings(BaseSettings):
     db_name: str = os.getenv("DB_NAME", "examai")
     
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
     ollama_host: str = os.getenv("OLLAMA_HOST", "http://localhost:11434")
     
-    default_provider: str = os.getenv("DEFAULT_PROVIDER", "openrouter")  # openrouter or ollama
+    default_provider: str = os.getenv("DEFAULT_PROVIDER", "gemini")  # gemini, openrouter, or ollama
     openrouter_model: str = os.getenv("OPENROUTER_MODEL", "google/gemini-2.5-flash")
+    gemini_model: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     ollama_model: str = os.getenv("OLLAMA_MODEL", "llama3")
     
     theme: str = os.getenv("THEME", "cyber")

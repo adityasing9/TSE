@@ -67,6 +67,8 @@ function Start-AskAI {
             return $true
         } catch {
             Write-Host "$red  Update failed: $_$reset"
+            # Clear cached passcode on failure so they get prompted to re-enter it next time
+            $script:cachedAdminPass = $null
             return $false
         }
     }
@@ -179,6 +181,8 @@ function Start-AskAI {
                 Write-Host "$green  ✔ Passcode updated successfully! Use the new passcode next time.$reset"
             } catch {
                 Write-Host "$red  ❌ Failed to update passcode: $_$reset"
+                # Clear cached passcode on error so they get prompted to re-enter it next time
+                $script:cachedAdminPass = $null
             }
             Write-Host ""
             continue

@@ -77,6 +77,8 @@ except:
         return 0
     else
         echo -e "${RED}  Update failed: $success${RESET}" >&2
+        # Clear cached passcode on error so they get prompted to re-enter it next time
+        CACHED_ADMIN_PASS=""
         return 1
     fi
 }
@@ -203,6 +205,8 @@ except:
             echo -e "${GREEN}  ✔ Passcode updated successfully! Use the new passcode next time.${RESET}"
         else
             echo -e "${RED}  ❌ Failed to update passcode: $success${RESET}"
+            # Clear cached passcode on error so they get prompted to re-enter it next time
+            CACHED_ADMIN_PASS=""
         fi
         echo ""
         continue

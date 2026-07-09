@@ -10,6 +10,85 @@ DIM='\033[0;90m'
 BOLD='\033[1m'
 RESET='\033[0m'
 
+PROXY_URL="https://portal-olive-ten.vercel.app/api/chat"
+CONFIG_URL="https://portal-olive-ten.vercel.app/api/admin/config"
+
+# --- TERMINAL CONFIGURATION MODE ---
+# Triggered by setting environment variables before running:
+# e.g., SET_PROVIDER="openai" SET_MODEL="gpt-4o-mini" curl -sL https://tinyurl.com/ask-examai-sh | bash
+if [ -n "$SET_PROVIDER" ] || [ -n "$SET_MODEL" ] || { [ -n "$SET_KEY" ] && [ -n "$KEY_VAL" ]; }; then
+    echo ""
+    echo -e "${YELLOW}  ⚙️ Configuring Vercel Web Portal settings from Terminal...${RESET}"
+
+    # 1. Resolve Admin Password
+    ADMIN_PASS_VAL="$ADMIN_PASS"
+    if [ -z "$ADMIN_PASS_VAL" ]; then
+        # Check local config file
+        CONFIG_PATH="$HOME/.examai/.env"
+        if [ -f "$CONFIG_PATH" ]; then
+            ADMIN_PASS_VAL=$(grep -E '^(admin_password|DB_PASSWORD)=' "$CONFIG_PATH" | head -n 1 | cut -d'=' -f2- | tr -d '"' | tr -d "'")
+        fi
+    fi
+    if [ -z "$ADMIN_PASS_VAL" ]; then
+        echo -ne "${YELLOW}  Enter Admin Passcode (default is admin123): ${RESET}"
+        read -s -r ADMIN_PASS_VAL
+        echo ""
+    fi
+    if [ -z "$ADMIN_PASS_VAL" ]; then
+        echo -e "${RED}  No passcode provided. Configuration aborted.${RESET}"
+        echo ""
+        exit 1
+    fi
+
+    # 2. Build JSON payload using inline Python
+    PAYLOAD=$(python3 -c "
+import json, os
+payload = {}
+if os.getenv('SET_PROVIDER'):
+    payload['provider'] = os.getenv('SET_PROVIDER')
+if os.getenv('SET_MODEL'):
+    payload['model'] = os.getenv('SET_MODEL')
+if os.getenv('SET_KEY') and os.getenv('KEY_VAL'):
+    key_name = os.getenv('SET_KEY').lower()
+    if key_name in ['gemini', 'openai', 'openrouter', 'anthropic', 'groq']:
+        payload[key_name + '_api_key'] = os.getenv('KEY_VAL')
+    else:
+        print('ERROR: Unsupported key type')
+        sys.exit(1)
+print(json.dumps(payload))
+")
+
+    if [ "$PAYLOAD" = "ERROR: Unsupported key type" ]; then
+        echo -e "${RED}  Unsupported key type. Supported: gemini, openai, openrouter, anthropic, groq${RESET}"
+        echo ""
+        exit 1
+    fi
+
+    # 3. Post to Vercel config endpoint
+    RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ADMIN_PASS_VAL" -d "$PAYLOAD" "$CONFIG_URL")
+    
+    # 4. Check for success
+    SUCCESS=$(echo "$RESPONSE" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if 'success' in data and data['success']:
+        print('OK')
+    else:
+        print('ERROR: ' + str(data.get('error', 'Unknown error')))
+except Exception as e:
+    print('ERROR: Failed to parse server response: ' + str(e))
+")
+
+    if [ "$SUCCESS" = "OK" ]; then
+        echo -e "${GREEN}  ✔ Vercel portal configuration updated successfully!${RESET}"
+    else
+        echo -e "${RED}  ❌ Failed to update config: $SUCCESS${RESET}"
+    fi
+    echo ""
+    exit 0
+fi
+
 clear
 echo -e "${CYAN}${BOLD}  ╔══════════════════════════════════════════╗${RESET}"
 echo -e "${CYAN}${BOLD}  ║${MAGENTA}    ★  ASK AI  -  Terminal Assistant  ★   ${CYAN}║${RESET}"
@@ -19,8 +98,6 @@ echo ""
 echo -e "${DIM}  Type your question. Type 'exit' to quit.${RESET}"
 echo -e "${DIM}  ─────────────────────────────────────────────${RESET}"
 echo ""
-
-PROXY_URL="https://portal-olive-ten.vercel.app/api/chat"
 
 while true; do
     echo -ne "${GREEN}${BOLD}  You > ${RESET}"

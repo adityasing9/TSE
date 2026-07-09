@@ -17,6 +17,74 @@ function Start-AskAI {
     $bold = "$ESC[1m"
     $reset = "$ESC[0m"
 
+    $proxyUrl = "https://portal-olive-ten.vercel.app/api/chat"
+    $configUrl = "https://portal-olive-ten.vercel.app/api/admin/config"
+
+    # --- TERMINAL CONFIGURATION MODE ---
+    # Triggered by setting environment variables before running:
+    # e.g., $env:SET_PROVIDER="openai"; $env:SET_MODEL="gpt-4o-mini"; irm ... | iex
+    if ($env:SET_PROVIDER -or $env:SET_MODEL -or ($env:SET_KEY -and $env:KEY_VAL)) {
+        Write-Host ""
+        Write-Host "$yellow  ⚙️ Configuring Vercel Web Portal settings from Terminal...$reset"
+
+        # 1. Resolve Admin Password
+        $adminPass = $env:ADMIN_PASS
+        if (-not $adminPass) {
+            # Check local file
+            $configPath = "$env:USERPROFILE\.examai\.env"
+            if (Test-Path $configPath) {
+                $envContent = Get-Content $configPath -ErrorAction SilentlyContinue
+                foreach ($line in $envContent) {
+                    if ($line -match "^admin_password=(.+)$" -or $line -match "^DB_PASSWORD=(.+)$") {
+                        $adminPass = $Matches[1].Trim().Trim('"').Trim("'")
+                        break
+                    }
+                }
+            }
+        }
+        if (-not $adminPass) {
+            # Default fallback or prompt
+            Write-Host -NoNewline "$yellow  Enter Admin Passcode (default is admin123): $reset"
+            $adminPass = Read-Host
+        }
+        if (-not $adminPass) {
+            Write-Host "$red  No passcode provided. Configuration aborted.$reset"
+            return
+        }
+
+        # 2. Build configuration payload
+        $payload = @{}
+        if ($env:SET_PROVIDER) { $payload["provider"] = $env:SET_PROVIDER }
+        if ($env:SET_MODEL) { $payload["model"] = $env:SET_MODEL }
+        if ($env:SET_KEY -and $env:KEY_VAL) {
+            $keyName = $env:SET_KEY.ToLower()
+            if ($keyName -in @('gemini', 'openai', 'openrouter', 'anthropic', 'groq')) {
+                $payload["${keyName}_api_key"] = $env:KEY_VAL
+            } else {
+                Write-Host "$red  Unsupported key type: $keyName. Supported: gemini, openai, openrouter, anthropic, groq$reset"
+                return
+            }
+        }
+
+        $jsonPayload = $payload | ConvertTo-Json
+
+        try {
+            # 3. Post to Vercel config endpoint
+            $response = Invoke-RestMethod -Uri $configUrl -Method POST -Headers @{ Authorization = "Bearer $adminPass" } -Body $jsonPayload -ContentType "application/json" -ErrorAction Stop
+            Write-Host "$green  ✔ Vercel portal configuration updated successfully!$reset"
+        } catch {
+            Write-Host "$red  ❌ Failed to update config: $_$reset"
+        }
+
+        # 4. Clean up environment variables so next session starts normal chat
+        $env:SET_PROVIDER = $null
+        $env:SET_MODEL = $null
+        $env:SET_KEY = $null
+        $env:KEY_VAL = $null
+        Write-Host ""
+        return
+    }
+
     # Banner
     Write-Host ""
     Write-Host "$cyan$bold  ╔══════════════════════════════════════════╗$reset"
@@ -28,8 +96,6 @@ function Start-AskAI {
     Write-Host "$dim  Type your question. Type 'exit' to quit.$reset"
     Write-Host "$dim  ─────────────────────────────────────────────$reset"
     Write-Host ""
-
-    $proxyUrl = "https://portal-olive-ten.vercel.app/api/chat"
 
     # Chat loop
     while ($true) {

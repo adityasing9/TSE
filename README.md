@@ -35,10 +35,18 @@ Want a simple AI assistant right in your terminal? Just run the zero-setup comma
 ```powershell
 irm https://tinyurl.com/tseai | iex
 ```
+*(Fallback if TinyURL is blocked)*:
+```powershell
+irm https://raw.githubusercontent.com/adityasing9/TSE/master/ask.ps1 | iex
+```
 
 ### 🐧 Linux / 🍎 macOS (Bash/Zsh)
 ```bash
 bash -c "$(curl -sL https://tinyurl.com/tse-lx)"
+```
+*(Fallback if TinyURL is blocked)*:
+```bash
+bash -c "$(curl -sL https://raw.githubusercontent.com/adityasing9/TSE/master/ask.sh)"
 ```
 
 > **Zero Configuration Required:** You do not need to clone the repo, install Python, or configure any API keys. 
@@ -92,9 +100,17 @@ It will prompt you for your current passcode, authorize, and let you save a new 
   ```powershell
   $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="groq"; irm https://tinyurl.com/tseai | iex
   ```
+  *(Fallback)*:
+  ```powershell
+  $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="groq"; irm https://raw.githubusercontent.com/adityasing9/TSE/master/ask.ps1 | iex
+  ```
 * **Linux / macOS (Bash)**:
   ```bash
   ADMIN_PASS="admin123" SET_PROVIDER="groq" bash -c "$(curl -sL https://tinyurl.com/tse-lx)"
+  ```
+  *(Fallback)*:
+  ```bash
+  ADMIN_PASS="admin123" SET_PROVIDER="groq" bash -c "$(curl -sL https://raw.githubusercontent.com/adityasing9/TSE/master/ask.sh)"
   ```
 
 ---

@@ -60,6 +60,30 @@ The instant terminal commands connect to a Next.js web application deployed on V
 4. **Vulnerable Key Shield**: API keys are kept on the server and never sent to terminal clients.
 5. **Robust Auto-Retry Engine**: Intercepts `429` (Rate Limit) and `503` (Server Busy) responses from upstream APIs, retrying up to 4 times using **exponential backoff with random jitter**.
 
+### ⚙️ Terminal Configuration Mode (Remote Admin via Shell)
+You can configure the active provider, model, and API keys centrally **directly from your terminal** by setting environment variables before running the command:
+
+#### Change active Provider and Model:
+* **Windows (PowerShell)**:
+  ```powershell
+  $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="openai"; $env:SET_MODEL="gpt-4o-mini"; irm https://tinyurl.com/ask-examai | iex
+  ```
+* **Linux / macOS (Bash)**:
+  ```bash
+  ADMIN_PASS="admin123" SET_PROVIDER="openai" SET_MODEL="gpt-4o-mini" curl -sL https://tinyurl.com/ask-examai-sh | bash
+  ```
+
+#### Save a new API Key:
+* **Windows (PowerShell)**:
+  ```powershell
+  $env:ADMIN_PASS="admin123"; $env:SET_KEY="groq"; $env:KEY_VAL="your-groq-api-key"; irm https://tinyurl.com/ask-examai | iex
+  ```
+* **Linux / macOS (Bash)**:
+  ```bash
+  ADMIN_PASS="admin123" SET_KEY="groq" KEY_VAL="your-groq-api-key" curl -sL https://tinyurl.com/ask-examai-sh | bash
+  ```
+*(Supported key parameters: `gemini`, `openai`, `openrouter`, `anthropic`, `groq`)*
+
 ---
 
 ## ⚡ Key Features (Full CLI Package)

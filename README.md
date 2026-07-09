@@ -19,34 +19,61 @@
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![CI Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
 
-ExamAI CLI is an interactive command-line assistant designed to help engineering students prepare for exams. By providing structured theoretical answers, dynamic MCQs, high-yield revision sheets, spaced repetition flashcards, and vector-backed document queries, ExamAI turns the terminal into an academic powerhouse.
+ExamAI CLI is an interactive command-line assistant designed to help engineering students prepare for exams. It provides structured theoretical answers, dynamic MCQs, high-yield revision sheets, spaced repetition flashcards, and vector-backed document queries — turning your terminal into an academic powerhouse.
 
 ---
 
-## ⚡ Key Features
+## 💬 Quick Start — Instant AI Chat (No Install)
+
+Want a simple AI assistant right in your terminal? Just run this **one command** in PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/adityasing9/examai-cli/master/ask.ps1 | iex
+```
+
+That's it. No cloning, no Python, no setup. Just ask questions and get clean, formatted answers directly in your terminal.
+
+> **First-time setup:** You'll be asked for a free Gemini API key.
+> Get one instantly at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+
+**What you get:**
+- ✅ Simple chat interface — ask anything, get concise answers
+- ✅ Clean plain-text output — no markdown clutter, no asterisks
+- ✅ Completely free — powered by Google Gemini
+- ✅ Persistent — API key auto-saved for future sessions
+- ✅ Type `exit` or `q` to quit
+
+---
+
+## ⚡ Key Features (Full CLI)
+
+For the full exam-prep toolkit, install the CLI:
 
 1. **Cyberpunk Terminal Interface**: Styled using `Rich` with neon panels, progress bars, tables, and spinners.
 2. **AI Answer Expansion Engine**: Formulates university-level answers with formal definitions, conceptual explanations, comparative layouts, diagrams, and memory mnemonics.
-3. **Retrieval-Augmented Generation (RAG)**: Extracts, chunks, embeds (via local `SentenceTransformers`), and performs semantic search over PDF textbooks using `FAISS` vector indexes.
-4. **Offline Mode**: Operates fully offline by connecting to local `Ollama` servers (e.g. running `llama3` or `mistral`) with automatic online-to-offline failover.
-5. **Relational Storage with SQLite Fallback**: Utilizes a central `MySQL` database for stats, flashcards, history, and bookmarks. Automatically falls back to a zero-config local `SQLite` file if MySQL is offline.
-6. **Dynamic Quiz & Leaderboard**: Cache-based MCQ solver that tracks student scores and updates a local subject leaderboard.
-7. **Spaced Repetition Flashcards**: Leitner flashcard review schedule with review intervals.
-8. **Document Exporters**: Exports answers instantly to `.md`, plain `.txt`, Microsoft `.docx`, or styled `.pdf` documents.
+3. **Multi-Provider AI Support**: Supports **Google Gemini** (free), **OpenRouter** (100+ models), and **Ollama** (fully offline) with automatic failover between providers.
+4. **Retrieval-Augmented Generation (RAG)**: Extracts, chunks, embeds (via local `SentenceTransformers`), and performs semantic search over PDF textbooks using `FAISS` vector indexes.
+5. **Offline Mode**: Operates fully offline by connecting to local `Ollama` servers (e.g. running `llama3` or `mistral`) with automatic online-to-offline failover.
+6. **Relational Storage with SQLite Fallback**: Utilizes a central `MySQL` database for stats, flashcards, history, and bookmarks. Automatically falls back to a zero-config local `SQLite` file if MySQL is offline.
+7. **Dynamic Quiz & Leaderboard**: Cache-based MCQ solver that tracks student scores and updates a local subject leaderboard.
+8. **Spaced Repetition Flashcards**: Leitner flashcard review schedule with review intervals.
+9. **Document Exporters**: Exports answers instantly to `.md`, plain `.txt`, Microsoft `.docx`, or styled `.pdf` documents.
 
 ---
 
 ## 📂 Project Architecture
 
 ```
-c:/Users/AADI/Desktop/My/CODE/Github/savior/
+examai-cli/
+├── ask.ps1                  # Instant AI Chat (run via irm | iex)
+├── install.ps1              # PowerShell installer (PATH setup)
 ├── examai/
 │   ├── __init__.py
 │   ├── main.py              # Typer CLI Command Router
 │   ├── config.py            # .env Loader & Settings Mutator
 │   ├── database.py          # MySQL / SQLite Dual-Engine Repository
 │   ├── ai/
-│   │   ├── client.py        # OpenRouter & Ollama Clients
+│   │   ├── client.py        # Gemini, OpenRouter & Ollama Clients
 │   │   ├── engine.py        # Prompts compiler and JSON parsers
 │   │   └── modes.py         # Exam marks templates (2m, 5m, 10m, 15m, MCQ)
 │   ├── pdf/
@@ -65,7 +92,7 @@ c:/Users/AADI/Desktop/My/CODE/Github/savior/
 
 ---
 
-## 🚀 Installation
+## 🚀 Full CLI Installation
 
 ### 1. Prerequisites
 - Python 3.10+
@@ -106,12 +133,26 @@ Configurations are loaded from a persistent `.env` file created in your home dir
 # View current settings
 examai settings view
 
-# Set OpenRouter API Key
+# Set the AI provider (gemini, openrouter, or ollama)
+examai settings set provider "gemini"
+
+# Set Gemini API Key (free - recommended)
+examai settings set gemini_api_key "your-gemini-key"
+
+# Set OpenRouter API Key (alternative)
 examai settings set openrouter_api_key "your-openrouter-key"
 
-# Change provider to local Ollama (Offline Mode)
+# Change to local Ollama (Offline Mode)
 examai settings set provider "ollama"
 ```
+
+### Supported AI Providers
+
+| Provider | Cost | Setup | Best For |
+|----------|------|-------|----------|
+| **Gemini** (default) | Free | Get key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Recommended for most users |
+| **OpenRouter** | Paid / Free models | Get key at [openrouter.ai](https://openrouter.ai) | Access to 100+ models |
+| **Ollama** | Free (local) | Install [ollama.com](https://ollama.com) + pull a model | Fully offline usage |
 
 ---
 
@@ -188,9 +229,13 @@ examai bookmarks
 
 ## 🛠️ Troubleshooting
 
-- **FAISS Installation Errors**: On Windows, if FAISS complains during installation, make sure C++ Build Tools are installed, or install pre-compiled binaries: `pip install faiss-cpu`.
-- **MySQL Missing**: If MySQL is not running or credentials are wrong, the CLI will output a console notice and switch to SQLite. Your histories, flashcards, and settings will remain fully operational.
-- **Ollama Offline**: When switching to offline provider, make sure Ollama is running (`ollama serve`) and the model is pulled locally: `ollama pull llama3`.
+| Issue | Solution |
+|-------|----------|
+| **402 Payment Required** (OpenRouter) | Your account has no credits. Switch to free Gemini: `examai settings set provider "gemini"` |
+| **404 Model Not Found** (OpenRouter) | The model name is wrong. Check models at [openrouter.ai/models](https://openrouter.ai/models) |
+| **FAISS Installation Errors** | On Windows, install C++ Build Tools or use: `pip install faiss-cpu` |
+| **MySQL Missing** | CLI auto-switches to SQLite. All features remain fully operational. |
+| **Ollama Offline** | Make sure Ollama is running (`ollama serve`) and a model is pulled: `ollama pull llama3` |
 
 ---
 

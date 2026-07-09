@@ -20,69 +20,70 @@ function Start-AskAI {
     $proxyUrl = "https://portal-olive-ten.vercel.app/api/chat"
     $configUrl = "https://portal-olive-ten.vercel.app/api/admin/config"
 
-    # --- TERMINAL CONFIGURATION MODE ---
-    # Triggered by setting environment variables before running:
-    # e.g., $env:SET_PROVIDER="openai"; $env:SET_MODEL="gpt-4o-mini"; irm ... | iex
-    if ($env:SET_PROVIDER -or $env:SET_MODEL -or ($env:SET_KEY -and $env:KEY_VAL)) {
-        Write-Host ""
-        Write-Host "$yellow  ⚙️ Configuring Vercel Web Portal settings from Terminal...$reset"
+    # Cached admin passcode for the session
+    $script:cachedAdminPass = $env:ADMIN_PASS
 
-        # 1. Resolve Admin Password
-        $adminPass = $env:ADMIN_PASS
-        if (-not $adminPass) {
-            # Check local file
-            $configPath = "$env:USERPROFILE\.examai\.env"
-            if (Test-Path $configPath) {
-                $envContent = Get-Content $configPath -ErrorAction SilentlyContinue
-                foreach ($line in $envContent) {
-                    if ($line -match "^admin_password=(.+)$" -or $line -match "^DB_PASSWORD=(.+)$") {
-                        $adminPass = $Matches[1].Trim().Trim('"').Trim("'")
-                        break
-                    }
+    # Helper to resolve admin password
+    function Get-AdminPasscode {
+        if ($script:cachedAdminPass) {
+            return $script:cachedAdminPass
+        }
+        # Check local file
+        $configPath = "$env:USERPROFILE\.examai\.env"
+        if (Test-Path $configPath) {
+            $envContent = Get-Content $configPath -ErrorAction SilentlyContinue
+            foreach ($line in $envContent) {
+                if ($line -match "^admin_password=(.+)$" -or $line -match "^DB_PASSWORD=(.+)$") {
+                    $script:cachedAdminPass = $Matches[1].Trim().Trim('"').Trim("'")
+                    return $script:cachedAdminPass
                 }
             }
         }
-        if (-not $adminPass) {
-            # Default fallback or prompt
-            Write-Host -NoNewline "$yellow  Enter Admin Passcode (default is admin123): $reset"
-            $adminPass = Read-Host
-        }
-        if (-not $adminPass) {
-            Write-Host "$red  No passcode provided. Configuration aborted.$reset"
-            return
+        # Prompt user
+        Write-Host -NoNewline "$yellow  [Auth] Enter Admin Passcode: $reset"
+        $script:cachedAdminPass = Read-Host
+        return $script:cachedAdminPass
+    }
+
+    # Helper to send config update to Vercel
+    function Set-VercelConfig {
+        param(
+            [string]$provider,
+            [string]$model
+        )
+        $pass = Get-AdminPasscode
+        if (-not $pass) {
+            Write-Host "$red  Authorization failed. Could not update settings.$reset"
+            return $false
         }
 
-        # 2. Build configuration payload
         $payload = @{}
-        if ($env:SET_PROVIDER) { $payload["provider"] = $env:SET_PROVIDER }
-        if ($env:SET_MODEL) { $payload["model"] = $env:SET_MODEL }
-        if ($env:SET_KEY -and $env:KEY_VAL) {
-            $keyName = $env:SET_KEY.ToLower()
-            if ($keyName -in @('gemini', 'openai', 'openrouter', 'anthropic', 'groq')) {
-                $payload["${keyName}_api_key"] = $env:KEY_VAL
-            } else {
-                Write-Host "$red  Unsupported key type: $keyName. Supported: gemini, openai, openrouter, anthropic, groq$reset"
-                return
-            }
-        }
-
-        $jsonPayload = $payload | ConvertTo-Json
+        if ($provider) { $payload["provider"] = $provider }
+        if ($model) { $payload["model"] = $model }
+        $json = $payload | ConvertTo-Json
 
         try {
-            # 3. Post to Vercel config endpoint
-            $response = Invoke-RestMethod -Uri $configUrl -Method POST -Headers @{ Authorization = "Bearer $adminPass" } -Body $jsonPayload -ContentType "application/json" -ErrorAction Stop
-            Write-Host "$green  ✔ Vercel portal configuration updated successfully!$reset"
+            $response = Invoke-RestMethod -Uri $configUrl -Method POST -Headers @{ Authorization = "Bearer $pass" } -Body $json -ContentType "application/json" -ErrorAction Stop
+            return $true
         } catch {
-            Write-Host "$red  ❌ Failed to update config: $_$reset"
+            Write-Host "$red  Update failed: $_$reset"
+            return $false
         }
+    }
 
-        # 4. Clean up environment variables so next session starts normal chat
+    # --- STARTUP ENVIRONMENT CONFIGURATION (OPTIONAL) ---
+    if ($env:SET_PROVIDER -or $env:SET_MODEL) {
+        Write-Host "$yellow  ⚙️ Updating Vercel portal settings...$reset"
+        $ok = Set-VercelConfig -provider $env:SET_PROVIDER -model $env:SET_MODEL
+        if ($ok) {
+            Write-Host "$green  ✔ Settings updated successfully!$reset"
+        } else {
+            Write-Host "$yellow  ⚠️ Settings update failed. Continuing with existing portal config...$reset"
+        }
+        # Clean environment vars for this session
         $env:SET_PROVIDER = $null
         $env:SET_MODEL = $null
-        $env:SET_KEY = $null
-        $env:KEY_VAL = $null
         Write-Host ""
-        return
     }
 
     # Banner
@@ -94,6 +95,7 @@ function Start-AskAI {
     Write-Host ""
 
     Write-Host "$dim  Type your question. Type 'exit' to quit.$reset"
+    Write-Host "$dim  Type '/provider [name]' or '/model [name]' to switch LLMs.$reset"
     Write-Host "$dim  ─────────────────────────────────────────────$reset"
     Write-Host ""
 
@@ -101,11 +103,37 @@ function Start-AskAI {
     while ($true) {
         Write-Host -NoNewline "$green$bold  You > $reset"
         $question = Read-Host
-        if (-not $question -or $question.Trim().ToLower() -in @('exit', 'quit', 'q', 'bye')) {
+        if (-not $question) { continue }
+        
+        $trimmed = $question.Trim()
+        if ($trimmed.ToLower() -in @('exit', 'quit', 'q', 'bye')) {
             Write-Host ""
             Write-Host "$magenta  Goodbye!$reset"
             Write-Host ""
             break
+        }
+
+        # --- INTERACTIVE CHAT COMMANDS ---
+        if ($trimmed.StartsWith("/provider ")) {
+            $newProv = $trimmed.Substring(10).Trim()
+            Write-Host "$yellow  Switching provider to '$newProv'...$reset"
+            $ok = Set-VercelConfig -provider $newProv
+            if ($ok) {
+                Write-Host "$green  ✔ Active provider changed to '$newProv'!$reset"
+            }
+            Write-Host ""
+            continue
+        }
+        
+        if ($trimmed.StartsWith("/model ")) {
+            $newModel = $trimmed.Substring(7).Trim()
+            Write-Host "$yellow  Switching model to '$newModel'...$reset"
+            $ok = Set-VercelConfig -model $newModel
+            if ($ok) {
+                Write-Host "$green  ✔ Active model changed to '$newModel'!$reset"
+            }
+            Write-Host ""
+            continue
         }
 
         # Show thinking indicator
@@ -151,11 +179,11 @@ function Start-AskAI {
 
             $lines = $answer -split "`n"
             foreach ($line in $lines) {
-                $trimmed = $line.TrimEnd()
-                if ($trimmed -eq "") {
+                $trimmedLine = $line.TrimEnd()
+                if ($trimmedLine -eq "") {
                     Write-Host ""
                 } else {
-                    Write-Host "    $trimmed"
+                    Write-Host "    $trimmedLine"
                 }
             }
 

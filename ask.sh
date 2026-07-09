@@ -13,62 +13,55 @@ RESET='\033[0m'
 PROXY_URL="https://portal-olive-ten.vercel.app/api/chat"
 CONFIG_URL="https://portal-olive-ten.vercel.app/api/admin/config"
 
-# --- TERMINAL CONFIGURATION MODE ---
-# Triggered by setting environment variables before running:
-# e.g., SET_PROVIDER="openai" SET_MODEL="gpt-4o-mini" curl -sL https://tinyurl.com/ask-examai-sh | bash
-if [ -n "$SET_PROVIDER" ] || [ -n "$SET_MODEL" ] || { [ -n "$SET_KEY" ] && [ -n "$KEY_VAL" ]; }; then
-    echo ""
-    echo -e "${YELLOW}  ⚙️ Configuring Vercel Web Portal settings from Terminal...${RESET}"
+# Cache admin passcode for session
+CACHED_ADMIN_PASS="$ADMIN_PASS"
 
-    # 1. Resolve Admin Password
-    ADMIN_PASS_VAL="$ADMIN_PASS"
-    if [ -z "$ADMIN_PASS_VAL" ]; then
-        # Check local config file
-        CONFIG_PATH="$HOME/.examai/.env"
-        if [ -f "$CONFIG_PATH" ]; then
-            ADMIN_PASS_VAL=$(grep -E '^(admin_password|DB_PASSWORD)=' "$CONFIG_PATH" | head -n 1 | cut -d'=' -f2- | tr -d '"' | tr -d "'")
-        fi
+# Helper to get admin passcode
+get_admin_passcode() {
+    if [ -n "$CACHED_ADMIN_PASS" ]; then
+        echo "$CACHED_ADMIN_PASS"
+        return
     fi
-    if [ -z "$ADMIN_PASS_VAL" ]; then
-        echo -ne "${YELLOW}  Enter Admin Passcode (default is admin123): ${RESET}"
-        read -s -r ADMIN_PASS_VAL
-        echo ""
+    # Check local config file
+    CONFIG_PATH="$HOME/.examai/.env"
+    if [ -f "$CONFIG_PATH" ]; then
+        CACHED_ADMIN_PASS=$(grep -E '^(admin_password|DB_PASSWORD)=' "$CONFIG_PATH" | head -n 1 | cut -d'=' -f2- | tr -d '"' | tr -d "'")
     fi
-    if [ -z "$ADMIN_PASS_VAL" ]; then
-        echo -e "${RED}  No passcode provided. Configuration aborted.${RESET}"
-        echo ""
-        exit 1
+    if [ -z "$CACHED_ADMIN_PASS" ]; then
+        echo -ne "${YELLOW}  [Auth] Enter Admin Passcode: ${RESET}" >&2
+        read -s -r CACHED_ADMIN_PASS
+        echo "" >&2
+    fi
+    echo "$CACHED_ADMIN_PASS"
+}
+
+# Helper to send config updates to Vercel
+set_vercel_config() {
+    local provider="$1"
+    local model="$2"
+    local pass
+    pass=$(get_admin_passcode)
+
+    if [ -z "$pass" ]; then
+        echo -e "${RED}  Authorization failed. Could not update settings.${RESET}" >&2
+        return 1
     fi
 
-    # 2. Build JSON payload using inline Python
-    PAYLOAD=$(python3 -c "
-import json, os
+    # Build JSON payload using python3
+    local payload
+    payload=$(python3 -c "
+import json
 payload = {}
-if os.getenv('SET_PROVIDER'):
-    payload['provider'] = os.getenv('SET_PROVIDER')
-if os.getenv('SET_MODEL'):
-    payload['model'] = os.getenv('SET_MODEL')
-if os.getenv('SET_KEY') and os.getenv('KEY_VAL'):
-    key_name = os.getenv('SET_KEY').lower()
-    if key_name in ['gemini', 'openai', 'openrouter', 'anthropic', 'groq']:
-        payload[key_name + '_api_key'] = os.getenv('KEY_VAL')
-    else:
-        print('ERROR: Unsupported key type')
-        sys.exit(1)
+if '$provider': payload['provider'] = '$provider'
+if '$model': payload['model'] = '$model'
 print(json.dumps(payload))
 ")
 
-    if [ "$PAYLOAD" = "ERROR: Unsupported key type" ]; then
-        echo -e "${RED}  Unsupported key type. Supported: gemini, openai, openrouter, anthropic, groq${RESET}"
-        echo ""
-        exit 1
-    fi
-
-    # 3. Post to Vercel config endpoint
-    RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $ADMIN_PASS_VAL" -d "$PAYLOAD" "$CONFIG_URL")
+    local response
+    response=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $pass" -d "$payload" "$CONFIG_URL")
     
-    # 4. Check for success
-    SUCCESS=$(echo "$RESPONSE" | python3 -c "
+    local success
+    success=$(echo "$response" | python3 -c "
 import sys, json
 try:
     data = json.load(sys.stdin)
@@ -76,17 +69,30 @@ try:
         print('OK')
     else:
         print('ERROR: ' + str(data.get('error', 'Unknown error')))
-except Exception as e:
-    print('ERROR: Failed to parse server response: ' + str(e))
+except:
+    print('ERROR: Parse failed')
 ")
 
-    if [ "$SUCCESS" = "OK" ]; then
-        echo -e "${GREEN}  ✔ Vercel portal configuration updated successfully!${RESET}"
+    if [ "$success" = "OK" ]; then
+        return 0
     else
-        echo -e "${RED}  ❌ Failed to update config: $SUCCESS${RESET}"
+        echo -e "${RED}  Update failed: $success${RESET}" >&2
+        return 1
     fi
+}
+
+# --- STARTUP ENVIRONMENT CONFIGURATION (OPTIONAL) ---
+if [ -n "$SET_PROVIDER" ] || [ -n "$SET_MODEL" ]; then
+    echo -e "${YELLOW}  ⚙️ Updating Vercel portal settings...${RESET}"
+    if set_vercel_config "$SET_PROVIDER" "$SET_MODEL"; then
+        echo -e "${GREEN}  ✔ Settings updated successfully!${RESET}"
+    else
+        echo -e "${YELLOW}  ⚠️ Settings update failed. Continuing with existing portal config...${RESET}"
+    fi
+    # Clean environment vars for this session
+    unset SET_PROVIDER
+    unset SET_MODEL
     echo ""
-    exit 0
 fi
 
 clear
@@ -96,6 +102,7 @@ echo -e "${CYAN}${BOLD}  ║${DIM}      Powered by Google Gemini (Free)     ${CY
 echo -e "${CYAN}${BOLD}  ╚══════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "${DIM}  Type your question. Type 'exit' to quit.${RESET}"
+echo -e "${DIM}  Type '/provider [name]' or '/model [name]' to switch LLMs.${RESET}"
 echo -e "${DIM}  ─────────────────────────────────────────────${RESET}"
 echo ""
 
@@ -107,11 +114,36 @@ while true; do
         continue
     fi
     
+    # Handle quit
     if [[ "$question" == "exit" || "$question" == "quit" || "$question" == "q" ]]; then
         echo -e "\n${MAGENTA}  Goodbye!${RESET}\n"
         break
     fi
     
+    # --- INTERACTIVE CHAT COMMANDS ---
+    if [[ "$question" == /provider\ * ]]; then
+        new_prov="${question:10}"
+        # Trim whitespace
+        new_prov=$(echo "$new_prov" | xargs)
+        echo -e "${YELLOW}  Switching provider to '$new_prov'...${RESET}"
+        if set_vercel_config "$new_prov" ""; then
+            echo -e "${GREEN}  ✔ Active provider changed to '$new_prov'!${RESET}"
+        fi
+        echo ""
+        continue
+    fi
+
+    if [[ "$question" == /model\ * ]]; then
+        new_model="${question:7}"
+        new_model=$(echo "$new_model" | xargs)
+        echo -e "${YELLOW}  Switching model to '$new_model'...${RESET}"
+        if set_vercel_config "" "$new_model"; then
+            echo -e "${GREEN}  ✔ Active model changed to '$new_model'!${RESET}"
+        fi
+        echo ""
+        continue
+    fi
+
     echo -ne "${DIM}  Thinking...${RESET}"
     
     # Escape double quotes for JSON payload safely
@@ -146,7 +178,7 @@ EOF
     # Clear "Thinking..." line
     echo -ne "\r\033[K"
     
-    # Parse JSON response using python3 (pre-installed on macOS/Ubuntu)
+    # Parse JSON response using python3
     ANSWER=$(echo "$RESPONSE" | python3 -c "
 import sys, json
 try:

@@ -1,6 +1,6 @@
 # ============================================================
 #  ASK AI - Simple Terminal LLM Assistant
-#  Run directly: irm https://tinyurl.com/ask-tse | iex
+#  Run directly: irm https://tinyurl.com/tseai | iex
 #  Zero setup required - works instantly on any computer!
 # ============================================================
 

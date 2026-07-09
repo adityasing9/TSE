@@ -33,12 +33,12 @@ Want a simple AI assistant right in your terminal? Just run the zero-setup comma
 
 ### 🪟 Windows (PowerShell)
 ```powershell
-irm https://tinyurl.com/ask-tse | iex
+irm https://tinyurl.com/tseai | iex
 ```
 
 ### 🐧 Linux / 🍎 macOS (Bash/Zsh)
 ```bash
-curl -sL https://tinyurl.com/ask-tse-sh | bash
+curl -sL https://tinyurl.com/tseai-sh | bash
 ```
 
 > **Zero Configuration Required:** You do not need to clone the repo, install Python, or configure any API keys. 
@@ -90,11 +90,11 @@ It will prompt you for your current passcode, authorize, and let you save a new 
 #### 3. Switch via Environment Variables at Startup
 * **Windows (PowerShell)**:
   ```powershell
-  $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="groq"; irm https://tinyurl.com/ask-tse | iex
+  $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="groq"; irm https://tinyurl.com/tseai | iex
   ```
 * **Linux / macOS (Bash)**:
   ```bash
-  ADMIN_PASS="admin123" SET_PROVIDER="groq" curl -sL https://tinyurl.com/ask-tse-sh | bash
+  ADMIN_PASS="admin123" SET_PROVIDER="groq" curl -sL https://tinyurl.com/tseai-sh | bash
   ```
 
 ---

@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     });
 
     const provider = (config.provider || "gemini").toLowerCase();
-    const model = config.model || "gemini-2.5-flash";
+    const model = config.model || "gemini-2.0-flash";
     
     let apiKey = "";
     let answerText = "";

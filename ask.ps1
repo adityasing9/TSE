@@ -138,10 +138,10 @@ function Start-AskAI {
             $prov = $null
             $mdl = $null
             switch ($opt.Trim()) {
-                "1" { $prov = "gemini"; $mdl = "gemini-2.5-flash" }
+                "1" { $prov = "gemini"; $mdl = "gemini-2.0-flash" }
                 "2" { $prov = "groq"; $mdl = "llama-3.3-70b-versatile" }
                 "3" { $prov = "openai"; $mdl = "gpt-4o-mini" }
-                "4" { $prov = "openrouter"; $mdl = "google/gemini-2.5-flash" }
+                "4" { $prov = "openrouter"; $mdl = "google/gemini-2.0-flash" }
                 "5" { $prov = "anthropic"; $mdl = "claude-3-5-sonnet-20241022" }
                 default { Write-Host "$red  Invalid selection.$reset`n"; $prov = $null; break }
             }

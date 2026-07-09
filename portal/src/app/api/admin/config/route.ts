@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({
     provider: config.provider || "gemini",
-    model: config.model || "gemini-2.5-flash",
+    model: config.model || "gemini-2.0-flash",
     gemini_api_key: config.gemini_api_key || "",
     openai_api_key: config.openai_api_key || "",
     openrouter_api_key: config.openrouter_api_key || "",

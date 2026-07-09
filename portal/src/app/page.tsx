@@ -46,7 +46,7 @@ export default function AdminPortal() {
   
   // Configurations
   const [activeProvider, setActiveProvider] = useState("gemini");
-  const [activeModel, setActiveModel] = useState("gemini-2.5-flash");
+  const [activeModel, setActiveModel] = useState("gemini-2.0-flash");
   const [geminiKey, setGeminiKey] = useState("");
   const [openaiKey, setOpenaiKey] = useState("");
   const [openrouterKey, setOpenrouterKey] = useState("");
@@ -205,11 +205,11 @@ export default function AdminPortal() {
   const handleProviderChange = (newProvider: string) => {
     setActiveProvider(newProvider);
     if (newProvider === "gemini") {
-      setActiveModel("gemini-2.5-flash");
+      setActiveModel("gemini-2.0-flash");
     } else if (newProvider === "openai") {
       setActiveModel("gpt-4o-mini");
     } else if (newProvider === "openrouter") {
-      setActiveModel("google/gemini-2.5-flash");
+      setActiveModel("google/gemini-2.0-flash");
     } else if (newProvider === "anthropic") {
       setActiveModel("claude-3-5-sonnet-20241022");
     } else if (newProvider === "groq") {

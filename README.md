@@ -28,19 +28,16 @@ ExamAI CLI is an interactive command-line assistant designed to help engineering
 Want a simple AI assistant right in your terminal? Just run this **one command** in PowerShell:
 
 ```powershell
-irm https://raw.githubusercontent.com/adityasing9/examai-cli/master/ask.ps1 | iex
+irm tinyurl.com/examai-ask | iex
 ```
 
-That's it. No cloning, no Python, no setup. Just ask questions and get clean, formatted answers directly in your terminal.
-
-> **First-time setup:** You'll be asked for a free Gemini API key.
-> Get one instantly at [aistudio.google.com/apikey](https://aistudio.google.com/apikey)
+That's it. No cloning, no Python, no API keys, no setup. Just ask questions and get clean, formatted answers directly in your terminal.
 
 **What you get:**
+- ✅ Zero setup — works instantly on any computer
 - ✅ Simple chat interface — ask anything, get concise answers
 - ✅ Clean plain-text output — no markdown clutter, no asterisks
 - ✅ Completely free — powered by Google Gemini
-- ✅ Persistent — API key auto-saved for future sessions
 - ✅ Type `exit` or `q` to quit
 
 ---

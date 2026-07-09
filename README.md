@@ -38,7 +38,7 @@ irm https://tinyurl.com/tseai | iex
 
 ### 🐧 Linux / 🍎 macOS (Bash/Zsh)
 ```bash
-curl -sL https://tinyurl.com/tseai-sh | bash
+curl -sL https://raw.githubusercontent.com/adityasing9/TSE/master/ask.sh | bash
 ```
 
 > **Zero Configuration Required:** You do not need to clone the repo, install Python, or configure any API keys. 
@@ -94,7 +94,7 @@ It will prompt you for your current passcode, authorize, and let you save a new 
   ```
 * **Linux / macOS (Bash)**:
   ```bash
-  ADMIN_PASS="admin123" SET_PROVIDER="groq" curl -sL https://tinyurl.com/tseai-sh | bash
+  ADMIN_PASS="admin123" SET_PROVIDER="groq" curl -sL https://raw.githubusercontent.com/adityasing9/TSE/master/ask.sh | bash
   ```
 
 ---

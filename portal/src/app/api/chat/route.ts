@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
+// Helper to convert Gemini contents format to standard OpenAI messages
+function convertToOpenAIMessages(contents: any[], systemInstruction: any) {
+  const messages: any[] = [];
+  
+  if (systemInstruction?.parts?.[0]?.text) {
+    messages.push({ role: "system", content: systemInstruction.parts[0].text });
+  }
+  
+  contents.forEach((msg) => {
+    // Gemini role 'model' maps to OpenAI 'assistant'
+    const role = msg.role === "model" || msg.role === "assistant" ? "assistant" : "user";
+    const text = msg.parts?.[0]?.text || "";
+    messages.push({ role, content: text });
+  });
+  
+  return messages;
+}
+
 export async function POST(req: NextRequest) {
   const startTime = Date.now();
   let questionLength = 0;
@@ -10,100 +28,214 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const contents = body.contents || [];
+    const systemInstruction = body.systemInstruction;
     
-    // Calculate question length
     try {
       questionLength = JSON.stringify(contents).length;
     } catch {}
 
-    // 1. Fetch Gemini API Key from Supabase config table
-    console.log("Fetching Gemini API Key from Supabase...");
-    const { data: configData, error: configError } = await supabase
+    // 1. Fetch active provider, model, and keys from Supabase
+    const { data: configRows, error: configError } = await supabase
       .from("examai_config")
-      .select("value")
-      .eq("key", "gemini_api_key")
-      .single();
+      .select("key, value");
 
-    if (configError || !configData?.value) {
-      console.error("Database fetch error:", configError);
-      statusCode = 500;
+    if (configError || !configRows) {
+      console.error("Database config fetch error:", configError);
       return NextResponse.json(
-        { error: "Gemini API key is not configured in the admin portal." },
+        { error: "System configuration could not be loaded." },
         { status: 500 }
       );
     }
 
-    const apiKey = configData.value;
-    console.log("Key found. Forwarding request to Gemini...");
-
-    // 2. Call Google Gemini API
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
-    
-    const response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
+    // Map rows into a key-value record
+    const config: Record<string, string> = {};
+    configRows.forEach((row) => {
+      config[row.key] = row.value;
     });
 
-    statusCode = response.status;
-    const respData = await response.json();
+    const provider = (config.provider || "gemini").toLowerCase();
+    const model = config.model || "gemini-2.5-flash";
+    
+    let apiKey = "";
+    let answerText = "";
+    let providerResponse: any = null;
 
-    if (!response.ok) {
-      const errMsg = respData?.error?.message || "Gemini API request failed.";
-      console.error("Gemini API error response:", errMsg);
-      return NextResponse.json({ error: errMsg }, { status: response.status });
+    console.log(`Forwarding request to: ${provider} | Model: ${model}`);
+
+    if (provider === "gemini") {
+      apiKey = config.gemini_api_key;
+      if (!apiKey) {
+        return NextResponse.json({ error: "Gemini API key is not configured." }, { status: 400 });
+      }
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      statusCode = response.status;
+      providerResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(providerResponse?.error?.message || "Gemini API request failed.");
+      }
+
+      answerText = providerResponse?.candidates?.[0]?.content?.parts?.[0]?.text || "";
+
+    } else if (provider === "openai") {
+      apiKey = config.openai_api_key;
+      if (!apiKey) {
+        return NextResponse.json({ error: "OpenAI API key is not configured." }, { status: 400 });
+      }
+
+      const url = "https://api.openai.com/v1/chat/completions";
+      const messages = convertToOpenAIMessages(contents, systemInstruction);
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`
+        },
+        body: JSON.stringify({ model, messages }),
+      });
+
+      statusCode = response.status;
+      providerResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(providerResponse?.error?.message || "OpenAI API request failed.");
+      }
+
+      answerText = providerResponse?.choices?.[0]?.message?.content || "";
+
+    } else if (provider === "openrouter") {
+      apiKey = config.openrouter_api_key;
+      if (!apiKey) {
+        return NextResponse.json({ error: "OpenRouter API key is not configured." }, { status: 400 });
+      }
+
+      const url = "https://openrouter.ai/api/v1/chat/completions";
+      const messages = convertToOpenAIMessages(contents, systemInstruction);
+      
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${apiKey}`,
+          "HTTP-Referer": "https://github.com/adityasing9/examai-cli",
+          "X-Title": "ExamAI Terminal Assistant"
+        },
+        body: JSON.stringify({ model, messages }),
+      });
+
+      statusCode = response.status;
+      providerResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(providerResponse?.error?.message || "OpenRouter API request failed.");
+      }
+
+      answerText = providerResponse?.choices?.[0]?.message?.content || "";
+
+    } else if (provider === "anthropic") {
+      apiKey = config.anthropic_api_key;
+      if (!apiKey) {
+        return NextResponse.json({ error: "Anthropic API key is not configured." }, { status: 400 });
+      }
+
+      const url = "https://api.anthropic.com/v1/messages";
+      
+      // Anthropic messages format
+      const anthropicMessages = contents.map((msg: any) => ({
+        role: msg.role === "model" || msg.role === "assistant" ? "assistant" : "user",
+        content: msg.parts?.[0]?.text || "",
+      }));
+      const system = systemInstruction?.parts?.[0]?.text || undefined;
+
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01"
+        },
+        body: JSON.stringify({
+          model,
+          system,
+          messages: anthropicMessages,
+          max_tokens: 4096
+        }),
+      });
+
+      statusCode = response.status;
+      providerResponse = await response.json();
+
+      if (!response.ok) {
+        throw new Error(providerResponse?.error?.message || "Anthropic API request failed.");
+      }
+
+      answerText = providerResponse?.content?.[0]?.text || "";
+    } else {
+      return NextResponse.json({ error: `Unsupported provider: ${provider}` }, { status: 400 });
     }
 
-    // Extract answer text to measure response length
-    let answer = "";
-    if (respData?.candidates?.[0]?.content?.parts?.[0]?.text) {
-      answer = respData.candidates[0].content.parts[0].text;
-      responseLength = answer.length;
-    }
+    responseLength = answerText.length;
 
-    // 3. Log query stats (await to ensure it persists before response completes)
+    // 2. Normalise the output to the standard Gemini structure for the client
+    const normalizedResponse = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: answerText
+              }
+            ],
+            role: "model"
+          },
+          finishReason: "STOP",
+          index: 0
+        }
+      ]
+    };
+
+    // 3. Log query stats
     const responseTimeMs = Date.now() - startTime;
     try {
-      const { error: logError } = await supabase
-        .from("examai_logs")
-        .insert({
-          question_length: questionLength,
-          response_length: responseLength,
-          response_time_ms: responseTimeMs,
-          status_code: statusCode,
-        });
-      if (logError) {
-        console.error("Failed to insert log in DB:", logError);
-      }
+      await supabase.from("examai_logs").insert({
+        question_length: questionLength,
+        response_length: responseLength,
+        response_time_ms: responseTimeMs,
+        status_code: statusCode,
+      });
     } catch (dbErr) {
       console.error("Failed to execute log insert:", dbErr);
     }
 
-    return NextResponse.json(respData);
+    return NextResponse.json(normalizedResponse);
 
   } catch (err: any) {
     const responseTimeMs = Date.now() - startTime;
     console.error("Proxy error caught:", err);
     
-    // Log the failure in DB
+    // Log the failure
     try {
-      await supabase
-        .from("examai_logs")
-        .insert({
-          question_length: questionLength,
-          response_length: 0,
-          response_time_ms: responseTimeMs,
-          status_code: 500,
-        });
+      await supabase.from("examai_logs").insert({
+        question_length: questionLength,
+        response_length: 0,
+        response_time_ms: responseTimeMs,
+        status_code: statusCode === 200 ? 500 : statusCode,
+      });
     } catch (dbErr) {
       console.error("Failed to execute error log insert:", dbErr);
     }
 
     return NextResponse.json(
-      { error: `Internal server error: ${err.message || err}` },
-      { status: 500 }
+      { error: err.message || err },
+      { status: statusCode === 200 ? 500 : statusCode }
     );
   }
 }

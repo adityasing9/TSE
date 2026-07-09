@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
 
-// Helper to authenticate requests using the password stored in Supabase config
 async function authenticate(req: NextRequest) {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -36,15 +35,18 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  // Create formatted object
   const config: Record<string, string> = {};
   data.forEach((item) => {
     config[item.key] = item.value;
   });
 
   return NextResponse.json({
+    provider: config.provider || "gemini",
+    model: config.model || "gemini-2.5-flash",
     gemini_api_key: config.gemini_api_key || "",
-    // Keep password hidden
+    openai_api_key: config.openai_api_key || "",
+    openrouter_api_key: config.openrouter_api_key || "",
+    anthropic_api_key: config.anthropic_api_key || "",
     has_password: !!config.admin_password,
   });
 }
@@ -56,19 +58,36 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { gemini_api_key, admin_password } = await req.json();
+    const body = await req.json();
+    const allowedKeys = [
+      "provider", 
+      "model", 
+      "gemini_api_key", 
+      "openai_api_key", 
+      "openrouter_api_key", 
+      "anthropic_api_key", 
+      "admin_password"
+    ];
 
-    if (gemini_api_key !== undefined) {
-      const { error } = await supabase
-        .from("examai_config")
-        .upsert({ key: "gemini_api_key", value: gemini_api_key, updated_at: new Date() });
-      if (error) throw error;
+    const updates = [];
+    for (const key of allowedKeys) {
+      if (body[key] !== undefined) {
+        // Don't save empty/whitespace-only passwords
+        if (key === "admin_password" && body[key].trim() === "") {
+          continue;
+        }
+        updates.push({
+          key,
+          value: body[key],
+          updated_at: new Date()
+        });
+      }
     }
 
-    if (admin_password !== undefined && admin_password.trim() !== "") {
+    if (updates.length > 0) {
       const { error } = await supabase
         .from("examai_config")
-        .upsert({ key: "admin_password", value: admin_password, updated_at: new Date() });
+        .upsert(updates);
       if (error) throw error;
     }
 

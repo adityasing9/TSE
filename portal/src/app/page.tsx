@@ -14,7 +14,9 @@ import {
   Database,
   Shield,
   Eye,
-  EyeOff
+  EyeOff,
+  Cpu,
+  Settings2
 } from "lucide-react";
 
 interface LogEntry {
@@ -41,12 +43,31 @@ export default function AdminPortal() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loginError, setLoginError] = useState("");
   const [stats, setStats] = useState<StatsData | null>(null);
-  const [apiKeyInput, setApiKeyInput] = useState("");
+  
+  // Configurations
+  const [activeProvider, setActiveProvider] = useState("gemini");
+  const [activeModel, setActiveModel] = useState("gemini-2.5-flash");
+  const [geminiKey, setGeminiKey] = useState("");
+  const [openaiKey, setOpenaiKey] = useState("");
+  const [openrouterKey, setOpenrouterKey] = useState("");
+  const [anthropicKey, setAnthropicKey] = useState("");
   const [newPasswordInput, setNewPasswordInput] = useState("");
-  const [showApiKey, setShowApiKey] = useState(false);
+  
+  // UI visibility states
+  const [showKeys, setShowKeys] = useState<Record<string, boolean>>({
+    gemini: false,
+    openai: false,
+    openrouter: false,
+    anthropic: false,
+  });
+  
   const [saveStatus, setSaveStatus] = useState({ success: false, message: "" });
   const [loading, setLoading] = useState(false);
   const refreshTimer = useRef<NodeJS.Timeout | null>(null);
+
+  const toggleKeyVisibility = (provider: string) => {
+    setShowKeys((prev) => ({ ...prev, [provider]: !prev[provider] }));
+  };
 
   // Check for saved password on mount
   useEffect(() => {
@@ -78,7 +99,12 @@ export default function AdminPortal() {
       });
       if (res.ok) {
         const data = await res.json();
-        setApiKeyInput(data.gemini_api_key);
+        setActiveProvider(data.provider);
+        setActiveModel(data.model);
+        setGeminiKey(data.gemini_api_key);
+        setOpenaiKey(data.openai_api_key);
+        setOpenrouterKey(data.openrouter_api_key);
+        setAnthropicKey(data.anthropic_api_key);
         setIsLoggedIn(true);
         localStorage.setItem("examai_admin_password", passToVerify);
         setLoginError("");
@@ -125,9 +151,18 @@ export default function AdminPortal() {
     const currentPassword = localStorage.getItem("examai_admin_password") || password;
 
     try {
-      const payload: Record<string, string> = {};
-      if (apiKeyInput !== undefined) payload.gemini_api_key = apiKeyInput;
-      if (newPasswordInput.trim() !== "") payload.admin_password = newPasswordInput;
+      const payload: Record<string, string> = {
+        provider: activeProvider,
+        model: activeModel,
+        gemini_api_key: geminiKey,
+        openai_api_key: openaiKey,
+        openrouter_api_key: openrouterKey,
+        anthropic_api_key: anthropicKey,
+      };
+      
+      if (newPasswordInput.trim() !== "") {
+        payload.admin_password = newPasswordInput;
+      }
 
       const res = await fetch("/api/admin/config", {
         method: "POST",
@@ -139,9 +174,8 @@ export default function AdminPortal() {
       });
 
       if (res.ok) {
-        setSaveStatus({ success: true, message: "Configuration updated successfully!" });
+        setSaveStatus({ success: true, message: "System settings updated successfully!" });
         if (newPasswordInput.trim() !== "") {
-          // If password changed, update local storage and state
           localStorage.setItem("examai_admin_password", newPasswordInput);
           setPassword(newPasswordInput);
           setNewPasswordInput("");
@@ -163,17 +197,29 @@ export default function AdminPortal() {
     setPassword("");
   };
 
+  // Helper to suggest standard model name based on provider
+  const handleProviderChange = (newProvider: string) => {
+    setActiveProvider(newProvider);
+    if (newProvider === "gemini") {
+      setActiveModel("gemini-2.5-flash");
+    } else if (newProvider === "openai") {
+      setActiveModel("gpt-4o-mini");
+    } else if (newProvider === "openrouter") {
+      setActiveModel("google/gemini-2.5-flash");
+    } else if (newProvider === "anthropic") {
+      setActiveModel("claude-3-5-sonnet-20241022");
+    }
+  };
+
   if (!isLoggedIn) {
     return (
       <main className="min-h-screen flex items-center justify-center p-4 bg-[#0a0512] text-[#e0e0fa] relative overflow-hidden font-mono">
-        {/* Cyberpunk grid background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#140d25_1px,transparent_1px),linear-gradient(to_bottom,#140d25_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-60"></div>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#140d25_1px,transparent_1px),linear-gradient(to_bottom,#140d25_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-60"></div>
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-[#bc39e1] rounded-full filter blur-[150px] opacity-10 animate-pulse"></div>
         <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-[#00f3ff] rounded-full filter blur-[150px] opacity-10 animate-pulse"></div>
 
         <div className="relative w-full max-w-md p-8 rounded-lg bg-[#0e0a1f]/90 border border-[#c135e3]/30 shadow-[0_0_30px_rgba(193,53,227,0.15)] backdrop-blur-md">
-          {/* Neon scanlines */}
-          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[size:100%_4px,6px_100%]"></div>
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%)] bg-[size:100%_4px]"></div>
           
           <div className="text-center mb-8">
             <div className="inline-flex p-3 rounded-full bg-[#c135e3]/10 border border-[#c135e3]/40 mb-4 shadow-[0_0_15px_rgba(193,53,227,0.2)]">
@@ -183,7 +229,7 @@ export default function AdminPortal() {
               EXAMAI PORTAL
             </h1>
             <p className="text-xs text-[#a09bb5] mt-2 tracking-wider">
-              CENTRAL ADMIN GATEWAY v1.0
+              CENTRAL ADMIN GATEWAY v2.0 (MULTI-LLM)
             </p>
           </div>
 
@@ -192,16 +238,14 @@ export default function AdminPortal() {
               <label className="text-xs uppercase text-[#00f3ff] tracking-widest flex items-center gap-2">
                 <Lock className="w-3 h-3" /> Admin Key
               </label>
-              <div className="relative">
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="ENTER ACCESS PHRASE..."
-                  disabled={loading}
-                  className="w-full px-4 py-3 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] placeholder-[#5d5875] focus:outline-none focus:border-[#00f3ff] focus:shadow-[0_0_10px_rgba(0,243,255,0.2)] transition-all font-mono text-sm"
-                />
-              </div>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="ENTER ACCESS PHRASE..."
+                disabled={loading}
+                className="w-full px-4 py-3 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] placeholder-[#5d5875] focus:outline-none focus:border-[#00f3ff] transition-all font-mono text-sm"
+              />
             </div>
 
             {loginError && (
@@ -214,7 +258,7 @@ export default function AdminPortal() {
             <button
               type="submit"
               disabled={loading || !password}
-              className="relative w-full py-3 bg-gradient-to-r from-[#c135e3] to-[#00f3ff] hover:from-[#d946ef] hover:to-[#38bdf8] text-[#07040e] font-bold rounded uppercase tracking-widest transition-all hover:scale-[1.01] hover:shadow-[0_0_20px_rgba(0,243,255,0.4)] disabled:opacity-50 disabled:pointer-events-none active:scale-[0.98]"
+              className="relative w-full py-3 bg-gradient-to-r from-[#c135e3] to-[#00f3ff] text-[#07040e] font-bold rounded uppercase tracking-widest transition-all hover:scale-[1.01] disabled:opacity-50 active:scale-[0.98]"
             >
               {loading ? "Decrypting..." : "Access System"}
             </button>
@@ -226,11 +270,8 @@ export default function AdminPortal() {
 
   return (
     <main className="min-h-screen p-6 md:p-8 bg-[#0a0512] text-[#e0e0fa] font-mono relative overflow-x-hidden">
-      {/* Cyberpunk grid background */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#140d25_1px,transparent_1px),linear-gradient(to_bottom,#140d25_1px,transparent_1px)] bg-[size:4rem_4rem] opacity-40"></div>
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-[#c135e3] rounded-full filter blur-[180px] opacity-[0.07]"></div>
-      
-      {/* Scanline overlay */}
       <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.15)_50%)] bg-[size:100%_4px]"></div>
 
       <div className="max-w-7xl mx-auto space-y-8 relative z-10">
@@ -244,14 +285,14 @@ export default function AdminPortal() {
                 EXAMAI ADMIN PANEL
               </h1>
               <p className="text-xs text-[#a09bb5] mt-0.5 tracking-widest">
-                CENTRAL API MANAGER & ENDPOINT PROXY
+                ACTIVE PROVIDER: <span className="text-[#00f3ff] uppercase font-bold">{activeProvider}</span> ({activeModel})
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-3 w-full md:w-auto">
             <button
-              onClick={() => { fetchStats(); }}
+              onClick={fetchStats}
               className="px-4 py-2 border border-[#00f3ff]/30 text-[#00f3ff] hover:bg-[#00f3ff]/10 rounded text-xs uppercase tracking-widest flex items-center gap-2 transition-all"
             >
               <RefreshCw className="w-3.5 h-3.5" /> Refresh
@@ -267,69 +308,48 @@ export default function AdminPortal() {
 
         {/* Dashboard Cards Grid */}
         <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Card 1: Daily Usage */}
           <div className="p-6 rounded-lg bg-[#0e0a1f]/80 border border-[#c135e3]/20 shadow-[0_0_15px_rgba(193,53,227,0.05)] backdrop-blur-md flex flex-col justify-between min-h-[140px]">
             <div className="flex justify-between items-start">
               <p className="text-xs uppercase text-[#a09bb5] tracking-widest">Queries Today</p>
               <Activity className="w-5 h-5 text-[#00f3ff]" />
             </div>
-            <div className="my-4">
-              <h2 className="text-3xl font-bold text-[#e0e0fa]">
-                {stats ? stats.requests_today : "..."}
-              </h2>
-            </div>
-            <div className="text-xs text-[#a09bb5] flex items-center gap-1.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#00f3ff] animate-ping inline-block"></span>
-              <span>Live tracking active</span>
-            </div>
+            <h2 className="text-3xl font-bold text-[#e0e0fa] my-4">
+              {stats ? stats.requests_today : "..."}
+            </h2>
+            <p className="text-[10px] text-[#a09bb5]">Cumulative queries today (UTC)</p>
           </div>
 
-          {/* Card 2: Current RPM Load */}
           <div className="p-6 rounded-lg bg-[#0e0a1f]/80 border border-[#c135e3]/20 shadow-[0_0_15px_rgba(193,53,227,0.05)] backdrop-blur-md flex flex-col justify-between min-h-[140px]">
             <div className="flex justify-between items-start">
-              <p className="text-xs uppercase text-[#a09bb5] tracking-widest">RPM Load</p>
-              <Terminal className="w-5 h-5 text-[#d946ef]" />
+              <p className="text-xs uppercase text-[#a09bb5] tracking-widest">Current RPM Load</p>
+              <Cpu className="w-5 h-5 text-[#d946ef]" />
             </div>
-            <div className="my-4">
-              <h2 className="text-3xl font-bold text-[#e0e0fa]">
-                {stats ? `${stats.requests_last_minute} / ${stats.rpm_limit}` : "..."}
-              </h2>
-            </div>
-            <div className="text-xs text-[#a09bb5]">
-              <span>Limit: 15 requests/min</span>
-            </div>
+            <h2 className="text-3xl font-bold text-[#e0e0fa] my-4">
+              {stats ? `${stats.requests_last_minute} / ${stats.rpm_limit}` : "..."}
+            </h2>
+            <p className="text-[10px] text-[#a09bb5]">Queries in the last 60 seconds</p>
           </div>
 
-          {/* Card 3: Average Latency */}
           <div className="p-6 rounded-lg bg-[#0e0a1f]/80 border border-[#c135e3]/20 shadow-[0_0_15px_rgba(193,53,227,0.05)] backdrop-blur-md flex flex-col justify-between min-h-[140px]">
             <div className="flex justify-between items-start">
-              <p className="text-xs uppercase text-[#a09bb5] tracking-widest">Avg Latency</p>
+              <p className="text-xs uppercase text-[#a09bb5] tracking-widest">Avg Response Time</p>
               <Clock className="w-5 h-5 text-[#eab308]" />
             </div>
-            <div className="my-4">
-              <h2 className="text-3xl font-bold text-[#e0e0fa]">
-                {stats ? `${stats.avg_response_time_ms} ms` : "..."}
-              </h2>
-            </div>
-            <div className="text-xs text-[#a09bb5]">
-              <span>Forwarded proxy latency</span>
-            </div>
+            <h2 className="text-3xl font-bold text-[#e0e0fa] my-4">
+              {stats ? `${stats.avg_response_time_ms} ms` : "..."}
+            </h2>
+            <p className="text-[10px] text-[#a09bb5]">Average processing latency</p>
           </div>
 
-          {/* Card 4: Success Rate */}
           <div className="p-6 rounded-lg bg-[#0e0a1f]/80 border border-[#c135e3]/20 shadow-[0_0_15px_rgba(193,53,227,0.05)] backdrop-blur-md flex flex-col justify-between min-h-[140px]">
             <div className="flex justify-between items-start">
-              <p className="text-xs uppercase text-[#a09bb5] tracking-widest">Success Rate</p>
+              <p className="text-xs uppercase text-[#a09bb5] tracking-widest">System Success Rate</p>
               <CheckCircle className="w-5 h-5 text-[#22c55e]" />
             </div>
-            <div className="my-4">
-              <h2 className="text-3xl font-bold text-[#e0e0fa]">
-                {stats ? `${stats.success_rate}%` : "..."}
-              </h2>
-            </div>
-            <div className="text-xs text-[#a09bb5]">
-              <span>Last 15 request logs</span>
-            </div>
+            <h2 className="text-3xl font-bold text-[#e0e0fa] my-4">
+              {stats ? `${stats.success_rate}%` : "..."}
+            </h2>
+            <p className="text-[10px] text-[#a09bb5]">Based on last 15 queries</p>
           </div>
         </section>
 
@@ -339,50 +359,149 @@ export default function AdminPortal() {
           {/* Settings Column */}
           <div className="lg:col-span-1 space-y-6">
             <div className="p-6 rounded-lg bg-[#0e0a1f]/80 border border-[#c135e3]/20 shadow-[0_0_15px_rgba(193,53,227,0.05)] backdrop-blur-md">
-              <h2 className="text-md font-bold uppercase text-[#00f3ff] tracking-widest flex items-center gap-2 mb-6">
-                <Shield className="w-4 h-4" /> System Settings
+              <h2 className="text-sm font-bold uppercase text-[#00f3ff] tracking-widest flex items-center gap-2 mb-6">
+                <Settings2 className="w-4 h-4" /> Provider Settings
               </h2>
 
-              <form onSubmit={handleUpdateConfig} className="space-y-6">
+              <form onSubmit={handleUpdateConfig} className="space-y-4">
                 
-                {/* API Key */}
-                <div className="space-y-2">
-                  <label className="text-xs text-[#a09bb5] uppercase tracking-wider block">
+                {/* Provider Selector */}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
+                    Active AI Provider
+                  </label>
+                  <select
+                    value={activeProvider}
+                    onChange={(e) => handleProviderChange(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
+                  >
+                    <option value="gemini">Google Gemini</option>
+                    <option value="openrouter">OpenRouter</option>
+                    <option value="openai">OpenAI (ChatGPT)</option>
+                    <option value="anthropic">Anthropic (Claude)</option>
+                  </select>
+                </div>
+
+                {/* Model Input */}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
+                    Model Name
+                  </label>
+                  <input
+                    type="text"
+                    value={activeModel}
+                    onChange={(e) => setActiveModel(e.target.value)}
+                    placeholder="ENTER MODEL STRING..."
+                    className="w-full px-3 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
+                  />
+                </div>
+
+                {/* Gemini API Key */}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
                     Gemini API Key
                   </label>
                   <div className="relative">
                     <input
-                      type={showApiKey ? "text" : "password"}
-                      value={apiKeyInput}
-                      onChange={(e) => setApiKeyInput(e.target.value)}
-                      placeholder="ENTER API KEY..."
-                      className="w-full pl-3 pr-10 py-2.5 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] placeholder-[#5d5875] text-xs font-mono focus:outline-none focus:border-[#00f3ff] transition-all"
+                      type={showKeys.gemini ? "text" : "password"}
+                      value={geminiKey}
+                      onChange={(e) => setGeminiKey(e.target.value)}
+                      placeholder="GEMINI KEY..."
+                      className="w-full pl-3 pr-10 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
                     />
                     <button
                       type="button"
-                      onClick={() => setShowApiKey(!showApiKey)}
+                      onClick={() => toggleKeyVisibility("gemini")}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a09bb5] hover:text-[#e0e0fa]"
                     >
-                      {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showKeys.gemini ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
 
-                {/* Password update */}
-                <div className="space-y-2">
-                  <label className="text-xs text-[#a09bb5] uppercase tracking-wider block">
-                    Change Access Key
+                {/* OpenRouter API Key */}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
+                    OpenRouter API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showKeys.openrouter ? "text" : "password"}
+                      value={openrouterKey}
+                      onChange={(e) => setOpenrouterKey(e.target.value)}
+                      placeholder="OPENROUTER KEY..."
+                      className="w-full pl-3 pr-10 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleKeyVisibility("openrouter")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a09bb5] hover:text-[#e0e0fa]"
+                    >
+                      {showKeys.openrouter ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* OpenAI API Key */}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
+                    OpenAI API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showKeys.openai ? "text" : "password"}
+                      value={openaiKey}
+                      onChange={(e) => setOpenaiKey(e.target.value)}
+                      placeholder="OPENAI KEY..."
+                      className="w-full pl-3 pr-10 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleKeyVisibility("openai")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a09bb5] hover:text-[#e0e0fa]"
+                    >
+                      {showKeys.openai ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Anthropic API Key */}
+                <div className="space-y-1">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
+                    Anthropic API Key
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showKeys.anthropic ? "text" : "password"}
+                      value={anthropicKey}
+                      onChange={(e) => setAnthropicKey(e.target.value)}
+                      placeholder="ANTHROPIC KEY..."
+                      className="w-full pl-3 pr-10 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => toggleKeyVisibility("anthropic")}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[#a09bb5] hover:text-[#e0e0fa]"
+                    >
+                      {showKeys.anthropic ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Change admin password */}
+                <div className="space-y-1 pt-2 border-t border-[#c135e3]/10">
+                  <label className="text-[10px] text-[#a09bb5] uppercase tracking-wider block">
+                    Change Portal Password
                   </label>
                   <input
                     type="password"
                     value={newPasswordInput}
                     onChange={(e) => setNewPasswordInput(e.target.value)}
                     placeholder="LEAVE BLANK TO KEEP UNCHANGED..."
-                    className="w-full px-3 py-2.5 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] placeholder-[#5d5875] text-xs font-mono focus:outline-none focus:border-[#00f3ff] transition-all"
+                    className="w-full px-3 py-2 bg-[#07040e] border border-[#c135e3]/30 rounded text-[#e0e0fa] text-xs font-mono focus:outline-none focus:border-[#00f3ff]"
                   />
                 </div>
 
-                {/* Status messages */}
                 {saveStatus.message && (
                   <div className={`text-xs p-3 rounded flex items-center gap-2 border ${
                     saveStatus.success 
@@ -390,33 +509,28 @@ export default function AdminPortal() {
                       : "text-red-400 bg-red-950/20 border-red-500/20"
                   }`}>
                     {saveStatus.success ? <CheckCircle className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-                    <span>{saveStatus.message}</span>
+                    <span className="text-[10px]">{saveStatus.message}</span>
                   </div>
                 )}
 
-                {/* Save button */}
                 <button
                   type="submit"
-                  className="w-full py-2.5 bg-gradient-to-r from-[#c135e3] to-[#00f3ff] text-[#07040e] font-bold rounded text-xs uppercase tracking-widest transition-all hover:scale-[1.01] hover:shadow-[0_0_15px_rgba(0,243,255,0.3)] flex items-center justify-center gap-2 active:scale-[0.98]"
+                  className="w-full py-2.5 bg-gradient-to-r from-[#c135e3] to-[#00f3ff] text-[#07040e] font-bold rounded text-xs uppercase tracking-widest transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
                 >
-                  <Save className="w-4 h-4" /> Save Configuration
+                  <Save className="w-4 h-4" /> Save Settings
                 </button>
               </form>
             </div>
 
-            {/* Quick Links / Status Panel */}
+            {/* DB Status */}
             <div className="p-6 rounded-lg bg-[#0e0a1f]/80 border border-[#c135e3]/20 shadow-[0_0_15px_rgba(193,53,227,0.05)] backdrop-blur-md space-y-4">
               <h2 className="text-xs font-bold uppercase text-[#00f3ff] tracking-widest flex items-center gap-2">
                 <Database className="w-4 h-4" /> DB Storage Status
               </h2>
-              <div className="text-xs space-y-2.5">
+              <div className="text-[10px] space-y-2.5">
                 <div className="flex justify-between border-b border-[#c135e3]/10 pb-2">
                   <span className="text-[#a09bb5]">Host</span>
-                  <span className="text-[#e0e0fa] text-[10px] font-mono">db.vrmbzcdjxqckaksxfbiz.supabase.co</span>
-                </div>
-                <div className="flex justify-between border-b border-[#c135e3]/10 pb-2">
-                  <span className="text-[#a09bb5]">Project Ref</span>
-                  <span className="text-[#e0e0fa] font-mono">vrmbzcdjxqckaksxfbiz</span>
+                  <span className="text-[#e0e0fa] text-[9px] font-mono">db.vrmbzcdjxqckaksxfbiz.supabase.co</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#a09bb5]">Total Logs Recorded</span>

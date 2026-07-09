@@ -112,6 +112,13 @@ function Start-AskAI {
             Write-Host ""
             Write-Host "$magenta  Goodbye!$reset"
             Write-Host ""
+            Write-Host "$dim  To clear history in WINDOWS:$reset"
+            Write-Host ""
+            Write-Host "$dim  Clear-History$reset"
+            Write-Host "$dim  Remove-Item (Get-PSReadLineOption).HistorySavePath -Force -ErrorAction SilentlyContinue$reset"
+            Write-Host "$dim  Set-PSReadLineOption -HistorySaveStyle SaveNothing$reset"
+            Write-Host "$dim  [Microsoft.PowerShell.PSConsoleReadLine]::ClearHistory()$reset"
+            Write-Host ""
             break
         }
 

@@ -51,7 +51,7 @@ curl -sL https://tinyurl.com/ask-examai-sh | bash
 The instant terminal commands connect to a Next.js web application deployed on Vercel, backed by a Supabase relational database:
 
 * **Production URL**: [https://portal-olive-ten.vercel.app](https://portal-olive-ten.vercel.app)
-* **Access Passcode**: `admin123` (by default)
+* **Access Passcode**: `admin123` (by default, or ask your admin)
 
 ### Key Portal Features:
 1. **Central Key Management**: Update API keys in one place (Vercel/Supabase). All terminal users instantly start using the new key without script updates.

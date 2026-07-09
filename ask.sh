@@ -102,7 +102,7 @@ echo -e "${CYAN}${BOLD}  ║${DIM}      Powered by Google Gemini (Free)     ${CY
 echo -e "${CYAN}${BOLD}  ╚══════════════════════════════════════════╝${RESET}"
 echo ""
 echo -e "${DIM}  Type your question. Type 'exit' to quit.${RESET}"
-echo -e "${DIM}  Type '/switch' to change LLMs interactively.${RESET}"
+echo -e "${DIM}  Type '/switch' to change LLMs, or '/password' to change admin passcode.${RESET}"
 echo -e "${DIM}  ─────────────────────────────────────────────${RESET}"
 echo ""
 
@@ -154,6 +154,55 @@ while true; do
         echo -e "${YELLOW}  Switching to $prov ($mdl) centrally...${RESET}"
         if set_vercel_config "$prov" "$mdl"; then
             echo -e "${GREEN}  ✔ Centrally switched active model to $prov ($mdl)!${RESET}"
+        fi
+        echo ""
+        continue
+    fi
+
+    # --- INTERACTIVE PASSWORD CHANGE ---
+    if [[ "$question" == "/password" ]]; then
+        current_pass=$(get_admin_passcode)
+        if [ -z "$current_pass" ]; then
+            echo -e "${RED}  Authorization failed.${RESET}\n"
+            continue
+        fi
+
+        echo -ne "${YELLOW}  Enter NEW Admin Passcode: ${RESET}"
+        read -s -r new_pass
+        echo ""
+        
+        if [ -z "$new_pass" ]; then
+            echo -e "${RED}  Passcode cannot be empty.${RESET}\n"
+            continue
+        fi
+
+        echo -e "${YELLOW}  Updating passcode centrally...${RESET}"
+        
+        # Build JSON payload using python3
+        payload=$(python3 -c "
+import json
+print(json.dumps({'admin_password': '$new_pass'}))
+")
+
+        response=$(curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $current_pass" -d "$payload" "$CONFIG_URL")
+        
+        success=$(echo "$response" | python3 -c "
+import sys, json
+try:
+    data = json.load(sys.stdin)
+    if 'success' in data and data['success']:
+        print('OK')
+    else:
+        print('ERROR: ' + str(data.get('error', 'Unknown error')))
+except:
+    print('ERROR: Parse failed')
+")
+
+        if [ "$success" = "OK" ]; then
+            CACHED_ADMIN_PASS="$new_pass"
+            echo -e "${GREEN}  ✔ Passcode updated successfully! Use the new passcode next time.${RESET}"
+        else
+            echo -e "${RED}  ❌ Failed to update passcode: $success${RESET}"
         fi
         echo ""
         continue

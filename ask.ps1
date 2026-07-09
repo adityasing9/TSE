@@ -95,7 +95,7 @@ function Start-AskAI {
     Write-Host ""
 
     Write-Host "$dim  Type your question. Type 'exit' to quit.$reset"
-    Write-Host "$dim  Type '/switch' to change LLMs interactively.$reset"
+    Write-Host "$dim  Type '/switch' to change LLMs, or '/password' to change admin passcode.$reset"
     Write-Host "$dim  ─────────────────────────────────────────────$reset"
     Write-Host ""
 
@@ -148,6 +148,37 @@ function Start-AskAI {
             $ok = Set-VercelConfig -provider $prov -model $mdl
             if ($ok) {
                 Write-Host "$green  ✔ Centrally switched active model to $prov ($mdl)!$reset"
+            }
+            Write-Host ""
+            continue
+        }
+
+        # --- CHANGE PASSWORD INTERACTIVELY ---
+        if ($trimmed -eq "/password") {
+            $currentPass = Get-AdminPasscode
+            if (-not $currentPass) {
+                Write-Host "$red  Authorization failed.$reset"
+                Write-Host ""
+                continue
+            }
+            
+            Write-Host -NoNewline "$yellow  Enter NEW Admin Passcode: $reset"
+            $newPass = Read-Host
+            if (-not $newPass.Trim()) {
+                Write-Host "$red  Passcode cannot be empty.$reset`n"
+                continue
+            }
+            
+            Write-Host "$yellow  Updating passcode centrally...$reset"
+            $payload = @{ admin_password = $newPass }
+            $json = $payload | ConvertTo-Json
+            
+            try {
+                $response = Invoke-RestMethod -Uri $configUrl -Method POST -Headers @{ Authorization = "Bearer $currentPass" } -Body $json -ContentType "application/json" -ErrorAction Stop
+                $script:cachedAdminPass = $newPass
+                Write-Host "$green  ✔ Passcode updated successfully! Use the new passcode next time.$reset"
+            } catch {
+                Write-Host "$red  ❌ Failed to update passcode: $_$reset"
             }
             Write-Host ""
             continue

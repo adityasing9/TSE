@@ -1,6 +1,6 @@
-# 🎓 ExamAI CLI
+# 🎓 ExamAI CLI & Web Admin Portal
 
-### *An AI-powered Terminal Assistant for Engineering Students.*
+### *The Ultimate AI-Powered Terminal Assistant & Central API Proxy for Engineering Students.*
 
 ---
 
@@ -17,50 +17,63 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python Version](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![CI Status](https://img.shields.io/badge/build-passing-brightgreen.svg)]()
+[![Next.js Version](https://img.shields.io/badge/next.js-16.2-black.svg)](https://nextjs.org/)
+[![Vercel Deployment](https://img.shields.io/badge/deployed_on-vercel-000000.svg?logo=vercel)](https://vercel.com/)
+[![Supabase Database](https://img.shields.io/badge/database-supabase-3ECF8E.svg?logo=supabase)](https://supabase.com/)
 
-ExamAI CLI is an interactive command-line assistant designed to help engineering students prepare for exams. It provides structured theoretical answers, dynamic MCQs, high-yield revision sheets, spaced repetition flashcards, and vector-backed document queries — turning your terminal into an academic powerhouse.
+ExamAI CLI is an academic companion application designed to help engineering students prepare for university exams. It provides mark-targeted theoretical answers, dynamic multiple-choice quizzes, local subject leaderboards, Leitner-system spaced repetition flashcards, high-yield revision sheets, and local PDF document RAG search.
+
+Additionally, a central **Next.js Web Admin Portal** hosted on Vercel acts as a secure, rate-limiting API proxy, allowing zero-setup terminal commands to query models globally while protecting keys.
 
 ---
 
-## 💬 Quick Start — Instant AI Chat (No Install)
+## 💬 Quick Start — Instant Terminal AI Chat (No Install)
 
-Want a simple AI assistant right in your terminal? Just run the command for your OS:
+Want a simple AI assistant right in your terminal? Just run the zero-setup command for your operating system:
 
-#### 🪟 Windows (PowerShell)
+### 🪟 Windows (PowerShell)
 ```powershell
 irm https://tinyurl.com/ask-examai | iex
 ```
 
-#### 🐧 Linux / 🍎 macOS (Bash/Zsh)
+### 🐧 Linux / 🍎 macOS (Bash/Zsh)
 ```bash
 curl -sL https://tinyurl.com/ask-examai-sh | bash
 ```
 
-That's it. No cloning, no configuration, no API keys, no setup. Just ask questions and get clean, formatted answers directly in your terminal.
-
-**What you get:**
-- ✅ Zero setup — works instantly on any computer
-- ✅ Simple chat interface — ask anything, get concise answers
-- ✅ Clean plain-text output — no markdown clutter, no asterisks
-- ✅ Completely free — powered by Google Gemini
-- ✅ Type `exit` or `q` to quit
+> **Zero Configuration Required:** You do not need to clone the repo, install Python, or configure any API keys. 
+> The commands connect directly to your Vercel Proxy backend, which securely forwards requests to Google Gemini.
 
 ---
 
-## ⚡ Key Features (Full CLI)
+## 🖥️ Web Admin Portal & Proxy Dashboard
 
-For the full exam-prep toolkit, install the CLI:
+The instant terminal commands connect to a Next.js web application deployed on Vercel, backed by a Supabase relational database:
 
-1. **Cyberpunk Terminal Interface**: Styled using `Rich` with neon panels, progress bars, tables, and spinners.
-2. **AI Answer Expansion Engine**: Formulates university-level answers with formal definitions, conceptual explanations, comparative layouts, diagrams, and memory mnemonics.
-3. **Multi-Provider AI Support**: Supports **Google Gemini** (free), **OpenRouter** (100+ models), and **Ollama** (fully offline) with automatic failover between providers.
-4. **Retrieval-Augmented Generation (RAG)**: Extracts, chunks, embeds (via local `SentenceTransformers`), and performs semantic search over PDF textbooks using `FAISS` vector indexes.
-5. **Offline Mode**: Operates fully offline by connecting to local `Ollama` servers (e.g. running `llama3` or `mistral`) with automatic online-to-offline failover.
-6. **Relational Storage with SQLite Fallback**: Utilizes a central `MySQL` database for stats, flashcards, history, and bookmarks. Automatically falls back to a zero-config local `SQLite` file if MySQL is offline.
-7. **Dynamic Quiz & Leaderboard**: Cache-based MCQ solver that tracks student scores and updates a local subject leaderboard.
-8. **Spaced Repetition Flashcards**: Leitner flashcard review schedule with review intervals.
-9. **Document Exporters**: Exports answers instantly to `.md`, plain `.txt`, Microsoft `.docx`, or styled `.pdf` documents.
+* **Production URL**: [https://portal-olive-ten.vercel.app](https://portal-olive-ten.vercel.app)
+* **Access Passcode**: `admin123` (by default)
+
+### Key Portal Features:
+1. **Central Key Management**: Update API keys in one place (Vercel/Supabase). All terminal users instantly start using the new key without script updates.
+2. **Central Model Switching**: Toggle the active provider and model name via the web interface.
+3. **API Normalisation**: Standardizes outputs from all backends into the Gemini format. The PowerShell/Bash scripts never break when you switch providers.
+4. **Vulnerable Key Shield**: API keys are kept on the server and never sent to terminal clients.
+5. **Robust Auto-Retry Engine**: Intercepts `429` (Rate Limit) and `503` (Server Busy) responses from upstream APIs, retrying up to 4 times using **exponential backoff with random jitter**.
+
+---
+
+## ⚡ Key Features (Full CLI Package)
+
+If you install the full CLI package, you unlock the complete academic preparation suite:
+
+1. **Cyberpunk Terminal UI**: Neon visual formatting built on Python's `Rich` library featuring panel structures, styled tables, custom spinners, and progressive loading bars.
+2. **Marks-Based Answer Engine**: Formulates university-level answers tailored for university mark allocations (e.g. 2, 5, 10, or 15 marks templates) with formal definitions, comparative tables, diagrams, and memory mnemonics.
+3. **Textbook Semantic Search (RAG)**: Extracts PDF text (using `PyMuPDF`), embeds it locally (using `SentenceTransformers`), and executes semantic searches (using a local `FAISS` vector database).
+4. **Multi-Provider Failover**: Switches between direct **Google Gemini**, **OpenRouter**, and **Ollama** (offline) with automatic failover.
+5. **Relational Database Engine**: Connects to a central `MySQL` database to store study stats, quizzes, flashcards, query history, and bookmarks. Automatically falls back to a zero-config local `SQLite` file if MySQL is offline.
+6. **Spaced Repetition Flashcards**: Leitner flashcard review schedule (Box 1 to 5) that calculates next review intervals based on user feedback.
+7. **Interactive Quiz & Leaderboard**: Cached MCQ solver that tracks student scores and updates a local subject leaderboard.
+8. **Document Exporters**: Exports answers to `.md`, `.txt`, Microsoft Word `.docx`, or styled `.pdf` documents.
 
 ---
 
@@ -68,34 +81,51 @@ For the full exam-prep toolkit, install the CLI:
 
 ```
 examai-cli/
-├── ask.ps1                  # Instant Windows AI Chat (irm | iex)
-├── ask.sh                   # Instant macOS/Linux AI Chat (curl | bash)
-├── install.ps1              # PowerShell installer (PATH setup)
+├── ask.ps1                  # Instant Windows AI Chat script
+├── ask.sh                   # Instant macOS/Linux AI Chat script
+├── install.ps1              # PowerShell PATH installer (Windows)
+├── pyproject.toml           # Python package manifests & metadata
+├── setup.py                 # Legacy package script setup
+├── tests/                   # Pytest test suite
+│   ├── test_ai.py
+│   ├── test_config.py
+│   ├── test_database.py
+│   ├── test_formatter.py
+│   └── test_pdf.py
+│
 ├── portal/                  # Next.js Web Admin Portal & Proxy API
-│   ├── app/                 # Route handlers & admin dashboard pages
-│   ├── public/              # Static assets
-│   └── src/                 # Next.js source code (lib, app layout)
-├── examai/
-│   ├── __init__.py
-│   ├── main.py              # Typer CLI Command Router
-│   ├── config.py            # .env Loader & Settings Mutator
-│   ├── database.py          # MySQL / SQLite Dual-Engine Repository
-│   ├── ai/
-│   │   ├── client.py        # Gemini, OpenRouter & Ollama Clients
-│   │   ├── engine.py        # Prompts compiler and JSON parsers
-│   │   └── modes.py         # Exam marks templates (2m, 5m, 10m, 15m, MCQ)
-│   ├── pdf/
-│   │   ├── processor.py     # PDF Page Text Chunker (PyMuPDF)
-│   │   ├── embeddings.py    # Embeddings Encoder (SentenceTransformers)
-│   │   └── search.py        # Vector Index Search (FAISS)
-│   ├── formatter/
-│   │   ├── text.py          # Rich Terminal Visualizers & Theme Tokens
-│   │   └── export.py        # DOCX, PDF, MD Document Writers
-│   └── utils/
-│       ├── logger.py        # File-based logger
-│       └── helpers.py       # Spaced-repetition scheduling helpers
-├── tests/                   # Pytest suite
-└── pyproject.toml           # Package manifests
+│   ├── src/
+│   │   ├── lib/
+│   │   │   └── supabase.ts  # Supabase client helper
+│   │   └── app/
+│   │       ├── api/
+│   │       │   ├── chat/    # Proxy endpoint (with retry backoff)
+│   │       │   ├── admin/
+│   │       │   │   ├── config/ # Update API keys / provider
+│   │       │   │   └── stats/  # Live usage stats logs
+│   │       ├── page.tsx     # Cyberpunk admin dashboard page
+│   │       ├── layout.tsx
+│   │       └── globals.css  # CSS tokens & visual stylesheet
+│
+└── examai/                  # Python CLI Package Root
+    ├── __init__.py
+    ├── main.py              # CLI Typer Command Router
+    ├── config.py            # .env Settings Loader & Mutator
+    ├── database.py          # MySQL / SQLite Dual-Engine Repository
+    ├── ai/
+    │   ├── client.py        # Gemini, OpenRouter & Ollama Clients
+    │   ├── engine.py        # Prompt compiler & JSON schema parsers
+    │   └── modes.py         # Marks-based response templates
+    ├── pdf/
+    │   ├── processor.py     # PDF Page Chunker (PyMuPDF)
+    │   ├── embeddings.py    # Embeddings Encoder (SentenceTransformers)
+    │   └── search.py        # Vector Index Search (FAISS)
+    ├── formatter/
+    │   ├── text.py          # Rich Terminal Visualizers & Theme Tokens
+    │   └── export.py        # Word DOCX & PDF Document Exporters
+    └── utils/
+        ├── logger.py        # File-based logger (~/.examai/logs.log)
+        └── helpers.py       # Spaced-repetition scheduling helpers
 ```
 
 ---
@@ -103,22 +133,20 @@ examai-cli/
 ## 🚀 Full CLI Installation
 
 ### 1. Prerequisites
-- Python 3.10+
-- (Optional) MySQL server running locally or remotely.
-- (Optional) Ollama running locally for offline features.
+* Python 3.10+
+* (Optional) MySQL server running locally or remotely.
+* (Optional) Ollama running locally for offline features.
 
-### 2. Setup
-Clone the repository and create a virtual environment:
+### 2. Clone and Setup
 ```bash
 git clone https://github.com/adityasing9/examai-cli.git
 cd examai-cli
 python -m venv venv
-venv\Scripts\activate      # Windows
-source venv/bin/activate    # macOS/Linux
+venv\Scripts\activate      # On Windows
+source venv/bin/activate    # On macOS/Linux
 ```
 
-### 3. Install Package
-Install the project in editable development mode:
+### 3. Install Packages
 ```bash
 pip install -e .
 pip install pytest
@@ -129,50 +157,14 @@ To run the `examai` command directly from anywhere in your PowerShell without pr
 ```powershell
 irm https://raw.githubusercontent.com/adityasing9/examai-cli/master/install.ps1 | iex
 ```
-This script adds the local executable folder to your User `PATH` permanently and registers the `examai` alias in your current terminal session immediately.
-
-## ⚙️ Configuration
-
-### 1. Web Admin Portal (For instant terminal `ask` scripts)
-If you are using the instant chat script (`ask.ps1` or `ask.sh`), your configuration is managed centrally in your **Vercel Web Admin Portal**:
-* **URL**: [https://portal-olive-ten.vercel.app](https://portal-olive-ten.vercel.app)
-* **Access Passcode**: `admin123` (by default)
-* **Features**: Toggle active providers, adjust model parameters, update API keys, and track live terminal query logs.
-
-### 2. Full CLI Configuration (For the local `examai` CLI tool)
-If you are running the full local CLI package, settings are loaded from a persistent `.env` file created in your home directory under `~/.examai/.env`. You can modify configurations via the CLI:
-
-```bash
-# View current settings
-examai settings view
-
-# Set the active provider (gemini, openrouter, or ollama)
-examai settings set provider "gemini"
-
-# Set API keys
-examai settings set gemini_api_key "your-gemini-key"
-examai settings set openrouter_api_key "your-openrouter-key"
-```
-
-### Supported AI Providers
-
-The terminal chat script and API proxy support **6 providers**:
-
-| Provider | Cost | API Key Setup | Best For |
-|----------|------|---------------|----------|
-| **Gemini** (default) | Free | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Fast responses, zero cost |
-| **OpenRouter** | Paid / Free | [openrouter.ai](https://openrouter.ai) | Switching between 100+ open/closed models |
-| **Groq** | Free tier | [console.groq.com](https://console.groq.com) | Ultra-fast Llama 3 speeds |
-| **OpenAI** | Paid | [platform.openai.com](https://platform.openai.com) | Standard GPT-4o-mini completions |
-| **Anthropic** | Paid | [console.anthropic.com](https://console.anthropic.com) | High-quality reasoning (Claude 3.5 Sonnet) |
-| **Ollama** | Free (local) | Install [ollama.com](https://ollama.com) | 100% offline, local execution |
+This script adds the local executable folder to your User `PATH` permanently.
 
 ---
 
-## 📖 Command Guide
+## 📖 CLI Command Guide
 
 ### 1. Ask Questions
-Ask a question and receive a structured answer.
+Ask a question and receive a structured university-style answer.
 ```bash
 # Ask a general question (select subject interactively)
 examai ask "Explain ACID Properties."
@@ -180,17 +172,17 @@ examai ask "Explain ACID Properties."
 # Target specific marks with a defined subject
 examai ask "How does Process Synchronization work?" -s "Operating Systems" -m 10
 
-# Search inside indexed textbooks for context
+# Search inside indexed textbooks for context (RAG)
 examai ask "Define 3NF Normal Form." -s "DBMS" --pdf -m 5
 
-# Export AI answer to a styled PDF file
-examai ask "What is a sliding window protocol?" -s "Computer Networks" -m 5 -e pdf -o sliding_window.pdf
+# Export AI answer to a styled Microsoft Word file
+examai ask "What is a sliding window protocol?" -s "Computer Networks" -m 5 -e docx -o sliding_window.docx
 ```
 
 ### 2. PDF Indexing (RAG)
 Parse textbooks and enable vector searches.
 ```bash
-# Index a PDF textbook
+# Index a PDF textbook (generates local embeddings and saves to FAISS)
 examai pdf index "C:\path\to\operating_systems.pdf"
 
 # List indexed textbooks
@@ -200,15 +192,15 @@ examai pdf list
 examai pdf clear
 ```
 
-### 3. Interactive Quizzes
-Test your knowledge with multiple-choice questions.
+### 3. Interactive Quizzes & Leaderboard
+Test your knowledge with multiple-choice questions. Correct answers score points, with hints available.
 ```bash
 # Run a 5-question MCQ quiz on DBMS
 examai quiz -s "DBMS" -l 5
 ```
 
 ### 4. Spaced Repetition Flashcards
-Create and review study cards.
+Create and review study cards using the Leitner spaced repetition system.
 ```bash
 # Generate flashcards for a specific topic
 examai flashcards generate -s "DBMS" -t "SQL Joins" -c 5
@@ -240,15 +232,50 @@ examai bookmarks
 
 ---
 
-## 🛠️ Troubleshooting
+## ⚙️ CLI Configuration Settings
 
-| Issue | Solution |
-|-------|----------|
-| **402 Payment Required** (OpenRouter) | Your account has no credits. Switch to free Gemini: `examai settings set provider "gemini"` |
-| **404 Model Not Found** (OpenRouter) | The model name is wrong. Check models at [openrouter.ai/models](https://openrouter.ai/models) |
-| **FAISS Installation Errors** | On Windows, install C++ Build Tools or use: `pip install faiss-cpu` |
-| **MySQL Missing** | CLI auto-switches to SQLite. All features remain fully operational. |
-| **Ollama Offline** | Make sure Ollama is running (`ollama serve`) and a model is pulled: `ollama pull llama3` |
+If running the local `examai` CLI, settings are managed from `~/.examai/.env`. You can modify configurations via the CLI:
+
+```bash
+# View current settings
+examai settings view
+
+# Set the AI provider (gemini, openrouter, or ollama)
+examai settings set provider "gemini"
+
+# Set Gemini API Key (free - recommended)
+examai settings set gemini_api_key "your-gemini-key"
+
+# Set OpenRouter API Key (alternative)
+examai settings set openrouter_api_key "your-openrouter-key"
+
+# Change to local Ollama (Offline Mode)
+examai settings set provider "ollama"
+```
+
+### Supported API Providers & Models
+
+| Provider | Supported Models | Setup | Best For |
+|----------|------------------|-------|----------|
+| **Gemini** (default) | `gemini-2.5-flash`, `gemini-1.5-flash` | Get key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Fast, free-tier reasoning |
+| **OpenRouter** | `google/gemini-2.5-flash`, `meta-llama/llama-3-8b` | Get key at [openrouter.ai](https://openrouter.ai) | Access to 100+ models |
+| **Ollama** | `llama3`, `mistral`, `phi3` | Install [ollama.com](https://ollama.com) + run local models | 100% offline, local execution |
+| **OpenAI** | `gpt-4o-mini`, `gpt-4o` | Get key at [platform.openai.com](https://platform.openai.com) | Standard commercial reasoning |
+| **Anthropic** | `claude-3-5-sonnet`, `claude-3-5-haiku` | Get key at [console.anthropic.com](https://console.anthropic.com) | Advanced coding and logic |
+| **Groq** | `llama-3.3-70b-versatile`, `mixtral-8x7b` | Get key at [console.groq.com](https://console.groq.com) | Sub-second Llama 3 speeds |
+
+---
+
+## 🛠️ Troubleshooting & FAQs
+
+| Issue | Cause | Solution |
+|-------|-------|----------|
+| **402 Payment Required** (OpenRouter) | Your account has no credits. | Switch to free Gemini: `examai settings set provider "gemini"` |
+| **404 Model Not Found** (OpenRouter) | Model name misspelled. | Verify model name at [openrouter.ai/models](https://openrouter.ai/models) |
+| **503 Server Overloaded** (Gemini) | API server is temporarily busy. | The Vercel proxy will retry automatically. If running local CLI, wait 10s and retry. |
+| **FAISS Installation Errors** | Missing C++ build compiler on Windows. | Run: `pip install faiss-cpu` |
+| **MySQL Connection Refused** | Local MySQL server is offline. | No action needed. The CLI automatically switches to SQLite storage. |
+| **Ollama Connection Refused** | Ollama local daemon is not running. | Run `ollama serve` in a background terminal before executing the query. |
 
 ---
 

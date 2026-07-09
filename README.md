@@ -68,8 +68,13 @@ For the full exam-prep toolkit, install the CLI:
 
 ```
 examai-cli/
-├── ask.ps1                  # Instant AI Chat (run via irm | iex)
+├── ask.ps1                  # Instant Windows AI Chat (irm | iex)
+├── ask.sh                   # Instant macOS/Linux AI Chat (curl | bash)
 ├── install.ps1              # PowerShell installer (PATH setup)
+├── portal/                  # Next.js Web Admin Portal & Proxy API
+│   ├── app/                 # Route handlers & admin dashboard pages
+│   ├── public/              # Static assets
+│   └── src/                 # Next.js source code (lib, app layout)
 ├── examai/
 │   ├── __init__.py
 │   ├── main.py              # Typer CLI Command Router
@@ -126,36 +131,41 @@ irm https://raw.githubusercontent.com/adityasing9/examai-cli/master/install.ps1 
 ```
 This script adds the local executable folder to your User `PATH` permanently and registers the `examai` alias in your current terminal session immediately.
 
----
-
 ## ⚙️ Configuration
 
-Configurations are loaded from a persistent `.env` file created in your home directory under `~/.examai/.env`. You can modify configurations via the CLI:
+### 1. Web Admin Portal (For instant terminal `ask` scripts)
+If you are using the instant chat script (`ask.ps1` or `ask.sh`), your configuration is managed centrally in your **Vercel Web Admin Portal**:
+* **URL**: [https://portal-olive-ten.vercel.app](https://portal-olive-ten.vercel.app)
+* **Access Passcode**: `admin123` (by default)
+* **Features**: Toggle active providers, adjust model parameters, update API keys, and track live terminal query logs.
+
+### 2. Full CLI Configuration (For the local `examai` CLI tool)
+If you are running the full local CLI package, settings are loaded from a persistent `.env` file created in your home directory under `~/.examai/.env`. You can modify configurations via the CLI:
 
 ```bash
 # View current settings
 examai settings view
 
-# Set the AI provider (gemini, openrouter, or ollama)
+# Set the active provider (gemini, openrouter, or ollama)
 examai settings set provider "gemini"
 
-# Set Gemini API Key (free - recommended)
+# Set API keys
 examai settings set gemini_api_key "your-gemini-key"
-
-# Set OpenRouter API Key (alternative)
 examai settings set openrouter_api_key "your-openrouter-key"
-
-# Change to local Ollama (Offline Mode)
-examai settings set provider "ollama"
 ```
 
 ### Supported AI Providers
 
-| Provider | Cost | Setup | Best For |
-|----------|------|-------|----------|
-| **Gemini** (default) | Free | Get key at [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Recommended for most users |
-| **OpenRouter** | Paid / Free models | Get key at [openrouter.ai](https://openrouter.ai) | Access to 100+ models |
-| **Ollama** | Free (local) | Install [ollama.com](https://ollama.com) + pull a model | Fully offline usage |
+The terminal chat script and API proxy support **6 providers**:
+
+| Provider | Cost | API Key Setup | Best For |
+|----------|------|---------------|----------|
+| **Gemini** (default) | Free | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | Fast responses, zero cost |
+| **OpenRouter** | Paid / Free | [openrouter.ai](https://openrouter.ai) | Switching between 100+ open/closed models |
+| **Groq** | Free tier | [console.groq.com](https://console.groq.com) | Ultra-fast Llama 3 speeds |
+| **OpenAI** | Paid | [platform.openai.com](https://platform.openai.com) | Standard GPT-4o-mini completions |
+| **Anthropic** | Paid | [console.anthropic.com](https://console.anthropic.com) | High-quality reasoning (Claude 3.5 Sonnet) |
+| **Ollama** | Free (local) | Install [ollama.com](https://ollama.com) | 100% offline, local execution |
 
 ---
 
@@ -244,7 +254,7 @@ examai bookmarks
 
 ## 🛣️ Roadmap
 - [ ] Add Docker containerization.
-- [ ] Implement HTML Web dashboard.
+- [x] Implement HTML Web dashboard & multi-provider proxy portal.
 - [ ] Support image uploads (diagram analysis).
 - [ ] Integrate Anki flashcard sync.
 

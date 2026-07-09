@@ -10,13 +10,45 @@ function convertToOpenAIMessages(contents: any[], systemInstruction: any) {
   }
   
   contents.forEach((msg) => {
-    // Gemini role 'model' maps to OpenAI 'assistant'
     const role = msg.role === "model" || msg.role === "assistant" ? "assistant" : "user";
     const text = msg.parts?.[0]?.text || "";
     messages.push({ role, content: text });
   });
   
   return messages;
+}
+
+// Fetch helper with exponential backoff and random jitter
+async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 4, baseDelayMs = 1500) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      const response = await fetch(url, options);
+      
+      // Retry on 429 (Rate Limit) or 503 (Server Overload/Unavailable)
+      if (response.status === 429 || response.status === 503) {
+        if (attempt === maxRetries - 1) {
+          console.error(`Max retries reached. Returning final status error ${response.status}`);
+          return response;
+        }
+        
+        // Jittered backoff: (2^attempt * baseDelay) + random(0, 1000)
+        const delay = Math.pow(2, attempt) * baseDelayMs + Math.random() * 1000;
+        console.warn(`⚠️ API returned ${response.status} (Attempt ${attempt + 1}/${maxRetries}). Retrying in ${Math.round(delay)}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      return response;
+    } catch (err) {
+      if (attempt === maxRetries - 1) {
+        throw err;
+      }
+      const delay = Math.pow(2, attempt) * baseDelayMs + Math.random() * 1000;
+      console.warn(`⚠️ Connection failed (Attempt ${attempt + 1}/${maxRetries}). Retrying in ${Math.round(delay)}ms... Error:`, err);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("API request failed after maximum retry attempts.");
 }
 
 export async function POST(req: NextRequest) {
@@ -47,7 +79,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Map rows into a key-value record
     const config: Record<string, string> = {};
     configRows.forEach((row) => {
       config[row.key] = row.value;
@@ -69,7 +100,7 @@ export async function POST(req: NextRequest) {
       }
 
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -93,7 +124,7 @@ export async function POST(req: NextRequest) {
       const url = "https://api.openai.com/v1/chat/completions";
       const messages = convertToOpenAIMessages(contents, systemInstruction);
       
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -120,7 +151,7 @@ export async function POST(req: NextRequest) {
       const url = "https://openrouter.ai/api/v1/chat/completions";
       const messages = convertToOpenAIMessages(contents, systemInstruction);
       
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -147,15 +178,13 @@ export async function POST(req: NextRequest) {
       }
 
       const url = "https://api.anthropic.com/v1/messages";
-      
-      // Anthropic messages format
       const anthropicMessages = contents.map((msg: any) => ({
         role: msg.role === "model" || msg.role === "assistant" ? "assistant" : "user",
         content: msg.parts?.[0]?.text || "",
       }));
       const system = systemInstruction?.parts?.[0]?.text || undefined;
 
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -178,6 +207,7 @@ export async function POST(req: NextRequest) {
       }
 
       answerText = providerResponse?.content?.[0]?.text || "";
+
     } else if (provider === "groq") {
       apiKey = config.groq_api_key;
       if (!apiKey) {
@@ -187,7 +217,7 @@ export async function POST(req: NextRequest) {
       const url = "https://api.groq.com/openai/v1/chat/completions";
       const messages = convertToOpenAIMessages(contents, systemInstruction);
       
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -210,7 +240,7 @@ export async function POST(req: NextRequest) {
 
     responseLength = answerText.length;
 
-    // 2. Normalise the output to the standard Gemini structure for the client
+    // 2. Normalise output
     const normalizedResponse = {
       candidates: [
         {

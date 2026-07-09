@@ -9,7 +9,7 @@ async function authenticate(req: NextRequest) {
   const password = authHeader.split(" ")[1];
 
   const { data, error } = await supabase
-    .from("examai_config")
+    .from("tse_config")
     .select("value")
     .eq("key", "admin_password")
     .single();
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   }
 
   const { data, error } = await supabase
-    .from("examai_config")
+    .from("tse_config")
     .select("key, value");
 
   if (error) {
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
 
     if (updates.length > 0) {
       const { error } = await supabase
-        .from("examai_config")
+        .from("tse_config")
         .upsert(updates);
       if (error) throw error;
     }

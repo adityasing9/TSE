@@ -1,1 +1,1 @@
-# Test suite for ExamAI CLI
+# Test suite for TSE CLI

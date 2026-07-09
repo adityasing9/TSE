@@ -1,7 +1,7 @@
 import fitz  # PyMuPDF
 from pathlib import Path
 from typing import List, Dict, Any
-from examai.utils.logger import logger
+from tse.utils.logger import logger
 
 class PDFProcessor:
     def __init__(self):

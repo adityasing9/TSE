@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     // 1. Fetch active provider, model, and keys from Supabase
     const { data: configRows, error: configError } = await supabase
-      .from("examai_config")
+      .from("tse_config")
       .select("key, value");
 
     if (configError || !configRows) {
@@ -156,8 +156,8 @@ export async function POST(req: NextRequest) {
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${apiKey}`,
-          "HTTP-Referer": "https://github.com/adityasing9/examai-cli",
-          "X-Title": "ExamAI Terminal Assistant"
+          "HTTP-Referer": "https://github.com/adityasing9/TSE",
+          "X-Title": "TSE Terminal Assistant"
         },
         body: JSON.stringify({ model, messages }),
       });
@@ -261,7 +261,7 @@ export async function POST(req: NextRequest) {
     // 3. Log query stats
     const responseTimeMs = Date.now() - startTime;
     try {
-      await supabase.from("examai_logs").insert({
+      await supabase.from("tse_logs").insert({
         question_length: questionLength,
         response_length: responseLength,
         response_time_ms: responseTimeMs,
@@ -279,7 +279,7 @@ export async function POST(req: NextRequest) {
     
     // Log the failure
     try {
-      await supabase.from("examai_logs").insert({
+      await supabase.from("tse_logs").insert({
         question_length: questionLength,
         response_length: 0,
         response_time_ms: responseTimeMs,

@@ -1,8 +1,8 @@
 import httpx
 import time
 from typing import List, Dict, Any, Optional, Tuple
-from examai.config import get_settings
-from examai.utils.logger import logger
+from tse.config import get_settings
+from tse.utils.logger import logger
 
 class AIClient:
     def __init__(self):
@@ -14,8 +14,8 @@ class AIClient:
         headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
-            "HTTP-Referer": "https://github.com/adityasing9/examai-cli",
-            "X-Title": "ExamAI CLI"
+            "HTTP-Referer": "https://github.com/adityasing9/TSE",
+            "X-Title": "TSE CLI"
         }
         data = {
             "model": model,
@@ -44,7 +44,7 @@ class AIClient:
                         raise RuntimeError(
                             f"OpenRouter returned 402 Payment Required. Your account has no credits. "
                             f"Add credits at https://openrouter.ai/credits or switch to free Gemini provider with: "
-                            f"examai settings set provider \"gemini\""
+                            f"tse settings set provider \"gemini\""
                         ) from None
                     elif status_code == 404:
                         raise RuntimeError(
@@ -180,7 +180,7 @@ class AIClient:
             if not api_key:
                 raise RuntimeError(
                     "Gemini API key is not configured. Get a free key at https://aistudio.google.com/apikey "
-                    "then run: examai settings set gemini_api_key \"YOUR_KEY\""
+                    "then run: tse settings set gemini_api_key \"YOUR_KEY\""
                 ) from None
             
             try:

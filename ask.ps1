@@ -1,6 +1,6 @@
 # ============================================================
 #  ASK AI - Simple Terminal LLM Assistant
-#  Run directly: irm https://tinyurl.com/ask-examai | iex
+#  Run directly: irm https://tinyurl.com/ask-tse | iex
 #  Zero setup required - works instantly on any computer!
 # ============================================================
 
@@ -29,7 +29,7 @@ function Start-AskAI {
             return $script:cachedAdminPass
         }
         # Check local file
-        $configPath = "$env:USERPROFILE\.examai\.env"
+        $configPath = "$env:USERPROFILE\.tse\.env"
         if (Test-Path $configPath) {
             $envContent = Get-Content $configPath -ErrorAction SilentlyContinue
             foreach ($line in $envContent) {
@@ -75,12 +75,12 @@ function Start-AskAI {
 
     # --- STARTUP ENVIRONMENT CONFIGURATION (OPTIONAL) ---
     if ($env:SET_PROVIDER -or $env:SET_MODEL) {
-        Write-Host "$yellow  ⚙️ Updating Vercel portal settings...$reset"
+        Write-Host "$yellow  [*] Updating Vercel portal settings...$reset"
         $ok = Set-VercelConfig -provider $env:SET_PROVIDER -model $env:SET_MODEL
         if ($ok) {
-            Write-Host "$green  ✔ Settings updated successfully!$reset"
+            Write-Host "$green  [OK] Settings updated successfully!$reset"
         } else {
-            Write-Host "$yellow  ⚠️ Settings update failed. Continuing with existing portal config...$reset"
+            Write-Host "$yellow  [!] Settings update failed. Continuing with existing portal config...$reset"
         }
         # Clean environment vars for this session
         $env:SET_PROVIDER = $null
@@ -90,15 +90,15 @@ function Start-AskAI {
 
     # Banner
     Write-Host ""
-    Write-Host "$cyan$bold  ╔══════════════════════════════════════════╗$reset"
-    Write-Host "$cyan$bold  ║$magenta    ★  ASK AI  -  Terminal Assistant  ★   $cyan║$reset"
-    Write-Host "$cyan$bold  ║$dim      Powered by Google Gemini (Free)     $cyan║$reset"
-    Write-Host "$cyan$bold  ╚══════════════════════════════════════════╝$reset"
+    Write-Host "$cyan$bold  +==========================================+$reset"
+    Write-Host "$cyan$bold  |$magenta    *  ASK AI  -  Terminal Assistant  *   $cyan|$reset"
+    Write-Host "$cyan$bold  |$dim      Powered by Google Gemini (Free)     $cyan|$reset"
+    Write-Host "$cyan$bold  +==========================================+$reset"
     Write-Host ""
 
     Write-Host "$dim  Type your question. Type 'exit' to quit.$reset"
     Write-Host "$dim  Type '/switch' to change LLMs, or '/password' to change admin passcode.$reset"
-    Write-Host "$dim  ─────────────────────────────────────────────$reset"
+    Write-Host "$dim  ---------------------------------------------$reset"
     Write-Host ""
 
     # Chat loop
@@ -125,13 +125,13 @@ function Start-AskAI {
             }
 
             Write-Host ""
-            Write-Host "$cyan  ┌─── Select AI Provider ───┐$reset"
-            Write-Host "$cyan  │ 1. Google Gemini (Free)   │$reset"
-            Write-Host "$cyan  │ 2. Groq (Ultra-fast)      │$reset"
-            Write-Host "$cyan  │ 3. OpenAI (ChatGPT)       │$reset"
-            Write-Host "$cyan  │ 4. OpenRouter             │$reset"
-            Write-Host "$cyan  │ 5. Anthropic (Claude)     │$reset"
-            Write-Host "$cyan  └───────────────────────────┘$reset"
+            Write-Host "$cyan  +--- Select AI Provider ---+$reset"
+            Write-Host "$cyan  | 1. Google Gemini (Free)   |$reset"
+            Write-Host "$cyan  | 2. Groq (Ultra-fast)      |$reset"
+            Write-Host "$cyan  | 3. OpenAI (ChatGPT)       |$reset"
+            Write-Host "$cyan  | 4. OpenRouter             |$reset"
+            Write-Host "$cyan  | 5. Anthropic (Claude)     |$reset"
+            Write-Host "$cyan  +---------------------------+$reset"
             Write-Host -NoNewline "$yellow  Choose option (1-5): $reset"
             $opt = Read-Host
             
@@ -149,7 +149,7 @@ function Start-AskAI {
             Write-Host "$yellow  Switching to $prov ($mdl) centrally...$reset"
             $ok = Set-VercelConfig -provider $prov -model $mdl
             if ($ok) {
-                Write-Host "$green  ✔ Centrally switched active model to $prov ($mdl)!$reset"
+                Write-Host "$green  [OK] Centrally switched active model to $prov ($mdl)!$reset"
             }
             Write-Host ""
             continue
@@ -178,9 +178,9 @@ function Start-AskAI {
             try {
                 $response = Invoke-RestMethod -Uri $configUrl -Method POST -Headers @{ Authorization = "Bearer $currentPass" } -Body $json -ContentType "application/json" -ErrorAction Stop
                 $script:cachedAdminPass = $newPass
-                Write-Host "$green  ✔ Passcode updated successfully! Use the new passcode next time.$reset"
+                Write-Host "$green  [OK] Passcode updated successfully! Use the new passcode next time.$reset"
             } catch {
-                Write-Host "$red  ❌ Failed to update passcode: $_$reset"
+                Write-Host "$red  [X] Failed to update passcode: $_$reset"
                 # Clear cached passcode on error so they get prompted to re-enter it next time
                 $script:cachedAdminPass = $null
             }
@@ -240,7 +240,7 @@ function Start-AskAI {
             }
 
             Write-Host ""
-            Write-Host "$dim  ─────────────────────────────────────────────$reset"
+            Write-Host "$dim  ---------------------------------------------$reset"
             Write-Host ""
 
         } catch {

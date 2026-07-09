@@ -23,7 +23,7 @@ get_admin_passcode() {
         return
     fi
     # Check local config file
-    CONFIG_PATH="$HOME/.examai/.env"
+    CONFIG_PATH="$HOME/.tse/.env"
     if [ -f "$CONFIG_PATH" ]; then
         CACHED_ADMIN_PASS=$(grep -E '^(admin_password|DB_PASSWORD)=' "$CONFIG_PATH" | head -n 1 | cut -d'=' -f2- | tr -d '"' | tr -d "'")
     fi

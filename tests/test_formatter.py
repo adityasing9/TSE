@@ -4,8 +4,8 @@ import tempfile
 import shutil
 from pathlib import Path
 
-from examai.formatter.text import parse_markdown_sections
-from examai.formatter.export import export_markdown, export_text, export_word, export_pdf
+from tse.formatter.text import parse_markdown_sections
+from tse.formatter.export import export_markdown, export_text, export_word, export_pdf
 
 class TestFormatter(unittest.TestCase):
     def setUp(self):

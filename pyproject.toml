@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "examai"
+name = "tse"
 version = "1.0.0"
-description = "An AI-powered Terminal Assistant for Engineering Students."
+description = "Terminal Search Engine (TSE) - AI-powered CLI"
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
@@ -32,8 +32,8 @@ dependencies = [
 ]
 
 [project.scripts]
-examai = "examai.main:app"
+tse = "tse.main:app"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["examai*"]
+include = ["tse*"]

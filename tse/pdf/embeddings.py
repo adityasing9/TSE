@@ -1,6 +1,6 @@
 import numpy as np
 from typing import List
-from examai.utils.logger import logger
+from tse.utils.logger import logger
 
 class EmbeddingsGenerator:
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):

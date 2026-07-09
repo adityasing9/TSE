@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="examai",
+    name="tse",
     version="1.0.0",
     packages=find_packages(),
     install_requires=[
@@ -22,7 +22,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "examai=examai.main:app",
+            "tse=tse.main:app",
         ],
     },
 )

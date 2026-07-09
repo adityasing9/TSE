@@ -1,6 +1,6 @@
-# Contributing to ExamAI CLI
+# Contributing to TSE CLI
 
-Thank you for choosing to contribute to ExamAI CLI! We welcome community contributions to help improve this terminal assistant for engineering students.
+Thank you for choosing to contribute to TSE CLI! We welcome community contributions to help improve this Terminal Search Engine.
 
 ## Code of Conduct
 By participating in this project, you agree to abide by our Code of Conduct (detailed in [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)).

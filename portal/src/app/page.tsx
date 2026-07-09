@@ -73,7 +73,7 @@ export default function AdminPortal() {
 
   // Check for saved password on mount
   useEffect(() => {
-    const savedPassword = localStorage.getItem("examai_admin_password");
+    const savedPassword = localStorage.getItem("tse_admin_password");
     if (savedPassword) {
       setPassword(savedPassword);
       verifyPassword(savedPassword);
@@ -109,11 +109,11 @@ export default function AdminPortal() {
         setAnthropicKey(data.anthropic_api_key);
         setGroqKey(data.groq_api_key);
         setIsLoggedIn(true);
-        localStorage.setItem("examai_admin_password", passToVerify);
+        localStorage.setItem("tse_admin_password", passToVerify);
         setLoginError("");
       } else {
         setLoginError("Invalid admin credentials.");
-        localStorage.removeItem("examai_admin_password");
+        localStorage.removeItem("tse_admin_password");
       }
     } catch (err) {
       setLoginError("Failed to connect to server.");
@@ -131,7 +131,7 @@ export default function AdminPortal() {
 
   const fetchStats = async () => {
     try {
-      const currentPassword = localStorage.getItem("examai_admin_password") || password;
+      const currentPassword = localStorage.getItem("tse_admin_password") || password;
       const res = await fetch("/api/admin/stats", {
         headers: {
           Authorization: `Bearer ${currentPassword}`,
@@ -151,7 +151,7 @@ export default function AdminPortal() {
   const handleUpdateConfig = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaveStatus({ success: false, message: "" });
-    const currentPassword = localStorage.getItem("examai_admin_password") || password;
+    const currentPassword = localStorage.getItem("tse_admin_password") || password;
 
     try {
       const payload: Record<string, string> = {
@@ -180,7 +180,7 @@ export default function AdminPortal() {
       if (res.ok) {
         setSaveStatus({ success: true, message: "System settings updated successfully!" });
         if (newPasswordInput.trim() !== "") {
-          localStorage.setItem("examai_admin_password", newPasswordInput);
+          localStorage.setItem("tse_admin_password", newPasswordInput);
           setPassword(newPasswordInput);
           setNewPasswordInput("");
         }
@@ -195,7 +195,7 @@ export default function AdminPortal() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("examai_admin_password");
+    localStorage.removeItem("tse_admin_password");
     setIsLoggedIn(false);
     setStats(null);
     setPassword("");
@@ -232,7 +232,7 @@ export default function AdminPortal() {
               <Terminal className="w-8 h-8 text-[#00f3ff] animate-pulse" />
             </div>
             <h1 className="text-2xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00f3ff] via-[#d946ef] to-[#c135e3] drop-shadow-[0_0_10px_rgba(193,53,227,0.3)]">
-              EXAMAI PORTAL
+              TSE PORTAL
             </h1>
             <p className="text-xs text-[#a09bb5] mt-2 tracking-wider">
               CENTRAL ADMIN GATEWAY v2.0 (MULTI-LLM)
@@ -288,7 +288,7 @@ export default function AdminPortal() {
             <Terminal className="w-8 h-8 text-[#00f3ff]" />
             <div>
               <h1 className="text-xl font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-[#00f3ff] via-[#d946ef] to-[#c135e3] drop-shadow-[0_0_5px_rgba(0,243,255,0.2)]">
-                EXAMAI ADMIN PANEL
+                TSE ADMIN PANEL
               </h1>
               <p className="text-xs text-[#a09bb5] mt-0.5 tracking-widest">
                 ACTIVE PROVIDER: <span className="text-[#00f3ff] uppercase font-bold">{activeProvider}</span> ({activeModel})

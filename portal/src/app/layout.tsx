@@ -9,8 +9,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ExamAI Admin Portal",
-  description: "Centralized Gemini API Key & Rate Limit Manager for ExamAI",
+  title: "TSE Admin Portal",
+  description: "Centralized API Key & Rate Limit Manager for TSE",
 };
 
 export default function RootLayout({

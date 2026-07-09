@@ -1,8 +1,8 @@
 import os
 import re
 from pathlib import Path
-from examai.utils.helpers import strip_markdown
-from examai.utils.logger import logger
+from tse.utils.helpers import strip_markdown
+from tse.utils.logger import logger
 
 def export_markdown(content: str, output_path: str) -> None:
     """Exports raw markdown content directly to a file."""
@@ -21,7 +21,7 @@ def export_text(content: str, output_path: str) -> None:
         f.write(plain_text)
     logger.info(f"Exported plain text to {output_path}")
 
-def export_word(content: str, output_path: str, title: str = "ExamAI Answer") -> None:
+def export_word(content: str, output_path: str, title: str = "TSE Answer") -> None:
     """Exports content to a Word Document (.docx) with structured headings and lists."""
     try:
         import docx
@@ -57,7 +57,7 @@ def export_word(content: str, output_path: str, title: str = "ExamAI Answer") ->
     doc.save(str(path))
     logger.info(f"Exported Word Document to {output_path}")
 
-def export_pdf(content: str, output_path: str, title: str = "ExamAI Answer") -> None:
+def export_pdf(content: str, output_path: str, title: str = "TSE Answer") -> None:
     """Exports content to a PDF document with standard layouts and styling."""
     try:
         from fpdf import FPDF
@@ -73,7 +73,7 @@ def export_pdf(content: str, output_path: str, title: str = "ExamAI Answer") -> 
             # Header banner
             self.set_text_color(0, 168, 255) # Cyan hex representation
             self.set_font("Helvetica", "B", 10)
-            self.cell(0, 10, "ExamAI CLI Academic Assistant", align="R")
+            self.cell(0, 10, "TSE CLI Academic Assistant", align="R")
             self.ln(10)
             self.set_draw_color(0, 168, 255)
             self.line(10, 18, 200, 18)

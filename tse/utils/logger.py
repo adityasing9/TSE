@@ -2,12 +2,12 @@ import logging
 import os
 from pathlib import Path
 
-# Create local data directory for ExamAI
-DATA_DIR = Path.home() / ".examai"
+# Create local data directory for TSE
+DATA_DIR = Path.home() / ".tse"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-LOG_FILE = DATA_DIR / "examai.log"
+LOG_FILE = DATA_DIR / "tse.log"
 
-def setup_logger(name: str = "examai") -> logging.Logger:
+def setup_logger(name: str = "tse") -> logging.Logger:
     """Sets up a file-based logger to keep the console clean for Rich UI."""
     logger = logging.getLogger(name)
     if logger.handlers:

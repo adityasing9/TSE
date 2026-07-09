@@ -5,9 +5,9 @@ from unittest.mock import patch, MagicMock
 import tempfile
 import shutil
 
-from examai.pdf.processor import pdf_processor
-from examai.pdf.search import VectorSearchManager
-from examai.database import DatabaseManager
+from tse.pdf.processor import pdf_processor
+from tse.pdf.search import VectorSearchManager
+from tse.database import DatabaseManager
 
 class TestPDF(unittest.TestCase):
     def setUp(self):
@@ -49,9 +49,9 @@ class TestPDF(unittest.TestCase):
         # Ensure it contains part of text
         self.assertIn("This is a simple", chunks[0])
 
-    @patch("examai.pdf.search.db")
-    @patch("examai.pdf.search.INDEX_PATH")
-    @patch("examai.pdf.embeddings.embeddings_generator.generate_embeddings")
+    @patch("tse.pdf.search.db")
+    @patch("tse.pdf.search.INDEX_PATH")
+    @patch("tse.pdf.embeddings.embeddings_generator.generate_embeddings")
     def test_vector_search_integration(self, mock_embed, mock_index_path, mock_db):
         """Test embedding addition to FAISS and query search matching."""
         # Setup mocks
@@ -82,7 +82,7 @@ class TestPDF(unittest.TestCase):
         # Run Indexing
         manager = VectorSearchManager()
         # Patch pdf processor output
-        with patch("examai.pdf.processor.pdf_processor.process_pdf", return_value=chunks):
+        with patch("tse.pdf.processor.pdf_processor.process_pdf", return_value=chunks):
             indexed_count = manager.index_pdf("mock.pdf")
             self.assertEqual(indexed_count, 3)
             

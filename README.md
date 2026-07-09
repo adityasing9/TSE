@@ -1,16 +1,16 @@
-# 🎓 ExamAI CLI & Web Admin Portal
+# 💻 Terminal Search Engine (TSE) & Web Admin Portal
 
-### *The Ultimate AI-Powered Terminal Assistant & Central API Proxy for Engineering Students.*
+### *The Ultimate AI-Powered Terminal Assistant & Central API Proxy.*
 
 ---
 
 ```
- ██████╗██╗     ██╗     ███████╗██╗  ██╗ █████╗ ███╗   ███╗ █████╗ ██╗
-██╔════╝██║     ██║     ██╔════╝╚██╗██╔╝██╔══██╗████╗ ████║██╔══██╗██║
-██║     ██║     ██║     █████╗   ╚███╔╝ ███████║██╔████╔██║███████║██║
-██║     ██║     ██║     ██╔══╝   ██╔██╗ ██╔══██║██║╚██╔╝██║██╔══██║██║
-╚██████╗███████╗██║     ███████╗██╔╝ ██╗██║  ██║██║ ╚═╝ ██║██║  ██║██║
- ╚═════╝╚══════╝╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝  ╚═╝╚═╝
+████████╗███████╗███████╗     ██████╗██╗     ██╗
+╚══██╔══╝██╔════╝██╔════╝    ██╔════╝██║     ██║
+   ██║   ███████╗█████╗      ██║     ██║     ██║
+   ██║   ╚════██║██╔══╝      ██║     ██║     ██║
+   ██║   ███████║███████╗    ╚██████╗███████╗██║
+   ╚═╝   ╚══════╝╚══════╝     ╚═════╝╚══════╝╚═╝
 ```
 
 ---
@@ -21,9 +21,9 @@
 [![Vercel Deployment](https://img.shields.io/badge/deployed_on-vercel-000000.svg?logo=vercel)](https://vercel.com/)
 [![Supabase Database](https://img.shields.io/badge/database-supabase-3ECF8E.svg?logo=supabase)](https://supabase.com/)
 
-ExamAI CLI is an academic companion application designed to help engineering students prepare for university exams. It provides mark-targeted theoretical answers, dynamic multiple-choice quizzes, local subject leaderboards, Leitner-system spaced repetition flashcards, high-yield revision sheets, and local PDF document RAG search.
+TSE is an AI-powered terminal assistant and study preparation utility. It provides mark-targeted theoretical answers, dynamic multiple-choice quizzes, local subject leaderboards, Leitner-system spaced repetition flashcards, high-yield revision sheets, and local PDF document RAG search.
 
-Additionally, a central **Next.js Web Admin Portal** hosted on Vercel acts as a secure, rate-limiting API proxy, allowing zero-setup terminal commands to query models globally while protecting keys.
+Additionally, a central **Next.js Web Admin Portal** hosted on Vercel acts as a secure, rate-limiting API proxy, allowing zero-setup terminal commands to query models globally while protecting API keys.
 
 ---
 
@@ -33,12 +33,12 @@ Want a simple AI assistant right in your terminal? Just run the zero-setup comma
 
 ### 🪟 Windows (PowerShell)
 ```powershell
-irm https://tinyurl.com/ask-examai | iex
+irm https://tinyurl.com/ask-tse | iex
 ```
 
 ### 🐧 Linux / 🍎 macOS (Bash/Zsh)
 ```bash
-curl -sL https://tinyurl.com/ask-examai-sh | bash
+curl -sL https://tinyurl.com/ask-tse-sh | bash
 ```
 
 > **Zero Configuration Required:** You do not need to clone the repo, install Python, or configure any API keys. 
@@ -90,11 +90,11 @@ It will prompt you for your current passcode, authorize, and let you save a new 
 #### 3. Switch via Environment Variables at Startup
 * **Windows (PowerShell)**:
   ```powershell
-  $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="groq"; irm https://tinyurl.com/ask-examai | iex
+  $env:ADMIN_PASS="admin123"; $env:SET_PROVIDER="groq"; irm https://tinyurl.com/ask-tse | iex
   ```
 * **Linux / macOS (Bash)**:
   ```bash
-  ADMIN_PASS="admin123" SET_PROVIDER="groq" curl -sL https://tinyurl.com/ask-examai-sh | bash
+  ADMIN_PASS="admin123" SET_PROVIDER="groq" curl -sL https://tinyurl.com/ask-tse-sh | bash
   ```
 
 ---
@@ -117,12 +117,12 @@ If you install the full CLI package, you unlock the complete academic preparatio
 ## 📂 Project Architecture
 
 ```
-examai-cli/
+TSE/
 ├── ask.ps1                  # Instant Windows AI Chat script
 ├── ask.sh                   # Instant macOS/Linux AI Chat script
 ├── install.ps1              # PowerShell PATH installer (Windows)
 ├── pyproject.toml           # Python package manifests & metadata
-├── setup.py                 # Legacy package script setup
+├── setup.py                 # Package setup configuration
 ├── tests/                   # Pytest test suite
 │   ├── test_ai.py
 │   ├── test_config.py
@@ -144,7 +144,7 @@ examai-cli/
 │   │       ├── layout.tsx
 │   │       └── globals.css  # CSS tokens & visual stylesheet
 │
-└── examai/                  # Python CLI Package Root
+└── tse/                     # Python CLI Package Root
     ├── __init__.py
     ├── main.py              # CLI Typer Command Router
     ├── config.py            # .env Settings Loader & Mutator
@@ -161,7 +161,7 @@ examai-cli/
     │   ├── text.py          # Rich Terminal Visualizers & Theme Tokens
     │   └── export.py        # Word DOCX & PDF Document Exporters
     └── utils/
-        ├── logger.py        # File-based logger (~/.examai/logs.log)
+        ├── logger.py        # File-based logger (~/.tse/tse.log)
         └── helpers.py       # Spaced-repetition scheduling helpers
 ```
 
@@ -176,8 +176,8 @@ examai-cli/
 
 ### 2. Clone and Setup
 ```bash
-git clone https://github.com/adityasing9/examai-cli.git
-cd examai-cli
+git clone https://github.com/adityasing9/TSE.git
+cd TSE
 python -m venv venv
 venv\Scripts\activate      # On Windows
 source venv/bin/activate    # On macOS/Linux
@@ -190,9 +190,9 @@ pip install pytest
 ```
 
 ### 4. PowerShell Shortcut Setup (Windows)
-To run the `examai` command directly from anywhere in your PowerShell without prefixing the virtual environment path, execute:
+To run the `tse` command directly from anywhere in your PowerShell without prefixing the virtual environment path, execute:
 ```powershell
-irm https://raw.githubusercontent.com/adityasing9/examai-cli/master/install.ps1 | iex
+irm https://raw.githubusercontent.com/adityasing9/TSE/master/install.ps1 | iex
 ```
 This script adds the local executable folder to your User `PATH` permanently.
 
@@ -204,90 +204,90 @@ This script adds the local executable folder to your User `PATH` permanently.
 Ask a question and receive a structured university-style answer.
 ```bash
 # Ask a general question (select subject interactively)
-examai ask "Explain ACID Properties."
+tse ask "Explain ACID Properties."
 
 # Target specific marks with a defined subject
-examai ask "How does Process Synchronization work?" -s "Operating Systems" -m 10
+tse ask "How does Process Synchronization work?" -s "Operating Systems" -m 10
 
 # Search inside indexed textbooks for context (RAG)
-examai ask "Define 3NF Normal Form." -s "DBMS" --pdf -m 5
+tse ask "Define 3NF Normal Form." -s "DBMS" --pdf -m 5
 
 # Export AI answer to a styled Microsoft Word file
-examai ask "What is a sliding window protocol?" -s "Computer Networks" -m 5 -e docx -o sliding_window.docx
+tse ask "What is a sliding window protocol?" -s "Computer Networks" -m 5 -e docx -o sliding_window.docx
 ```
 
 ### 2. PDF Indexing (RAG)
 Parse textbooks and enable vector searches.
 ```bash
 # Index a PDF textbook (generates local embeddings and saves to FAISS)
-examai pdf index "C:\path\to\operating_systems.pdf"
+tse pdf index "C:\path\to\operating_systems.pdf"
 
 # List indexed textbooks
-examai pdf list
+tse pdf list
 
 # Clear FAISS index
-examai pdf clear
+tse pdf clear
 ```
 
 ### 3. Interactive Quizzes & Leaderboard
 Test your knowledge with multiple-choice questions. Correct answers score points, with hints available.
 ```bash
 # Run a 5-question MCQ quiz on DBMS
-examai quiz -s "DBMS" -l 5
+tse quiz -s "DBMS" -l 5
 ```
 
 ### 4. Spaced Repetition Flashcards
-Create and review study cards using the Leitner spaced repetition system.
+Create and review study study cards using the Leitner spaced repetition system.
 ```bash
 # Generate flashcards for a specific topic
-examai flashcards generate -s "DBMS" -t "SQL Joins" -c 5
+tse flashcards generate -s "DBMS" -t "SQL Joins" -c 5
 
 # Review due flashcards
-examai flashcards study -s "DBMS"
+tse flashcards study -s "DBMS"
 ```
 
 ### 5. High-Yield Revision Sheets
 ```bash
 # Generate formulas, keyword checklists, and summaries
-examai revision -s "Engineering Mathematics"
+tse revision -s "Engineering Mathematics"
 ```
 
 ### 6. Query History & Bookmarks
 ```bash
 # List previously asked questions
-examai history list
+tse history list
 
 # View full answer of a past query
-examai history view 1
+tse history view 1
 
 # Bookmark/favorite a question
-examai history fav 1
+tse history fav 1
 
 # List bookmarked answers
-examai bookmarks
+tse bookmarks
 ```
 
 ---
 
 ## ⚙️ CLI Configuration Settings
 
-If running the local `examai` CLI, settings are managed from `~/.examai/.env`. You can modify configurations via the CLI:
+If running the local `tse` CLI, settings are managed from `~/.tse/.env`. You can modify configurations via the CLI:
 
 ```bash
 # View current settings
-examai settings view
+tse settings view
 
 # Set the AI provider (gemini, openrouter, or ollama)
-examai settings set provider "gemini"
+tse settings set provider "gemini"
 
 # Set Gemini API Key (free - recommended)
-examai settings set gemini_api_key "your-gemini-key"
+tse settings set gemini_api_key "your-gemini-key"
 
 # Set OpenRouter API Key (alternative)
-examai settings set openrouter_api_key "your-openrouter-key"
+tse settings set openrouter_api_key "your-openrouter-key"
 
 # Change to local Ollama (Offline Mode)
-examai settings set provider "ollama"
+tse settings set provider "ollama"
 ```
 
 ### Supported API Providers & Models
@@ -307,20 +307,12 @@ examai settings set provider "ollama"
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
-| **402 Payment Required** (OpenRouter) | Your account has no credits. | Switch to free Gemini: `examai settings set provider "gemini"` |
+| **402 Payment Required** (OpenRouter) | Your account has no credits. | Switch to free Gemini: `tse settings set provider "gemini"` |
 | **404 Model Not Found** (OpenRouter) | Model name misspelled. | Verify model name at [openrouter.ai/models](https://openrouter.ai/models) |
 | **503 Server Overloaded** (Gemini) | API server is temporarily busy. | The Vercel proxy will retry automatically. If running local CLI, wait 10s and retry. |
 | **FAISS Installation Errors** | Missing C++ build compiler on Windows. | Run: `pip install faiss-cpu` |
 | **MySQL Connection Refused** | Local MySQL server is offline. | No action needed. The CLI automatically switches to SQLite storage. |
 | **Ollama Connection Refused** | Ollama local daemon is not running. | Run `ollama serve` in a background terminal before executing the query. |
-
----
-
-## 🛣️ Roadmap
-- [ ] Add Docker containerization.
-- [x] Implement HTML Web dashboard & multi-provider proxy portal.
-- [ ] Support image uploads (diagram analysis).
-- [ ] Integrate Anki flashcard sync.
 
 ---
 

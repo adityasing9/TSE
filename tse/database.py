@@ -4,11 +4,11 @@ import os
 from pathlib import Path
 from datetime import datetime
 from typing import List, Dict, Any, Tuple, Optional
-from examai.config import get_settings
-from examai.utils.logger import logger
+from tse.config import get_settings
+from tse.utils.logger import logger
 
-DATA_DIR = Path.home() / ".examai"
-SQLITE_PATH = DATA_DIR / "examai.db"
+DATA_DIR = Path.home() / ".tse"
+SQLITE_PATH = DATA_DIR / "tse.db"
 
 class DatabaseManager:
     def __init__(self):
@@ -306,7 +306,7 @@ class DatabaseManager:
         else:
             next_box = 1  # Reset to box 1 on failure
             
-        from examai.utils.helpers import calculate_next_review
+        from tse.utils.helpers import calculate_next_review
         next_review_time = calculate_next_review(next_box)
         
         self.execute_write(

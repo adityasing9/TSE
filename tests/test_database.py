@@ -4,13 +4,13 @@ import tempfile
 import shutil
 from pathlib import Path
 from datetime import datetime
-from examai.database import DatabaseManager
+from tse.database import DatabaseManager
 
 class TestDatabase(unittest.TestCase):
     def setUp(self):
         """Sets up a database manager running with a temporary SQLite file."""
         self.test_dir = tempfile.mkdtemp()
-        self.db_path = Path(self.test_dir) / "test_examai.db"
+        self.db_path = Path(self.test_dir) / "test_tse.db"
         
         self.db = DatabaseManager()
         self.db.is_sqlite = True

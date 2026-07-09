@@ -1,7 +1,7 @@
 import os
 import unittest
 from pathlib import Path
-from examai.config import get_settings, update_config_key
+from tse.config import get_settings, update_config_key
 
 class TestConfig(unittest.TestCase):
     def test_settings_load(self):

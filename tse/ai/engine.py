@@ -1,7 +1,7 @@
 from typing import Dict, Any, Optional
-from examai.ai.client import ai_client
-from examai.ai.modes import get_exam_instructions
-from examai.utils.logger import logger
+from tse.ai.client import ai_client
+from tse.ai.modes import get_exam_instructions
+from tse.utils.logger import logger
 
 class PromptEngine:
     def __init__(self):

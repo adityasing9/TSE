@@ -26,12 +26,12 @@ from rich.box import DOUBLE, ROUNDED
 from rich.prompt import Prompt, Confirm
 
 # Import local components
-from examai.config import get_settings, update_config_key
-from examai.database import db
-from examai.utils.logger import logger
-from examai.ai.engine import prompt_engine
-from examai.pdf.search import search_manager
-from examai.formatter.text import (
+from tse.config import get_settings, update_config_key
+from tse.database import db
+from tse.utils.logger import logger
+from tse.ai.engine import prompt_engine
+from tse.pdf.search import search_manager
+from tse.formatter.text import (
     console, 
     print_welcome, 
     render_exam_answer, 
@@ -42,11 +42,11 @@ from examai.formatter.text import (
     COLOR_WARNING,
     COLOR_INFO
 )
-from examai.formatter.export import export_markdown, export_text, export_word, export_pdf
+from tse.formatter.export import export_markdown, export_text, export_word, export_pdf
 
 # Initialize Typer Apps
 app = typer.Typer(
-    help="🎓 ExamAI CLI: An AI-powered Terminal Assistant for Engineering Students.",
+    help="💻 TSE CLI: Terminal Search Engine.",
     rich_markup_mode="rich"
 )
 
@@ -521,7 +521,7 @@ def bookmarks():
     print_welcome()
     rows = db.get_bookmarks()
     if not rows:
-        console.print("[yellow]No bookmarks saved yet. Use 'examai history fav <id>' to bookmark answers.[/yellow]")
+        console.print("[yellow]No bookmarks saved yet. Use 'tse history fav <id>' to bookmark answers.[/yellow]")
         return
         
     table = Table(title="❤️ Bookmarked Answers", box=ROUNDED, border_style="magenta")
@@ -628,17 +628,17 @@ def settings_set(
 # ==========================================
 @app.command(name="about")
 def about():
-    """Show details and credits for ExamAI CLI."""
+    """Show details and credits for TSE CLI."""
     print_welcome()
     about_text = (
-        "[bold cyan]ExamAI CLI[/bold cyan] is an open-source terminal student companion designed to optimize exam preparation.\n\n"
+        "[bold cyan]TSE CLI[/bold cyan] is an open-source Terminal Search Engine.\n\n"
         "✨ [bold magenta]Features:[/bold magenta] AI answer expansion, dynamic quiz cache, spaced-repetition flashcards, "
         "and offline capability via Ollama local servers.\n\n"
         "👥 [bold green]Developed By:[/bold green] Google DeepMind Advanced Agentic Coding Pair Programmers\n"
         "⚖️ [bold yellow]License:[/bold yellow] MIT License\n"
-        "🔗 [bold blue]GitHub Repository:[/bold blue] https://github.com/adityasing9/examai-cli"
+        "🔗 [bold blue]GitHub Repository:[/bold blue] https://github.com/adityasing9/TSE"
     )
-    console.print(Panel(about_text, border_style="magenta", box=ROUNDED, title="🎓 About ExamAI CLI"))
+    console.print(Panel(about_text, border_style="magenta", box=ROUNDED, title="💻 About TSE CLI"))
 
 
 # Global exception hook to prevent raw tracebacks from leaking to end users
@@ -648,7 +648,7 @@ def _custom_excepthook(exc_type, exc_value, exc_tb):
         console.print("\n[yellow]Operation cancelled.[/yellow]")
         return
     console.print(f"\n[bold red]Error:[/bold red] {exc_value}")
-    logger = __import__('examai.utils.logger', fromlist=['logger']).logger
+    logger = __import__('tse.utils.logger', fromlist=['logger']).logger
     import traceback
     logger.error(''.join(traceback.format_exception(exc_type, exc_value, exc_tb)))
 

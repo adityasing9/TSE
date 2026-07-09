@@ -9,7 +9,7 @@ async function authenticate(req: NextRequest) {
   const password = authHeader.split(" ")[1];
 
   const { data, error } = await supabase
-    .from("examai_config")
+    .from("tse_config")
     .select("value")
     .eq("key", "admin_password")
     .single();
@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   try {
     // 1. Fetch total requests count
     const { count: totalRequests, error: countError } = await supabase
-      .from("examai_logs")
+      .from("tse_logs")
       .select("*", { count: "exact", head: true });
 
     if (countError) throw countError;
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
     todayStart.setUTCHours(0, 0, 0, 0);
 
     const { count: requestsToday, error: todayError } = await supabase
-      .from("examai_logs")
+      .from("tse_logs")
       .select("*", { count: "exact", head: true })
       .gte("timestamp", todayStart.toISOString());
 
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
     // 3. Fetch requests in the last minute (for RPM check)
     const oneMinuteAgo = new Date(Date.now() - 60000);
     const { count: requestsLastMinute, error: minuteError } = await supabase
-      .from("examai_logs")
+      .from("tse_logs")
       .select("*", { count: "exact", head: true })
       .gte("timestamp", oneMinuteAgo.toISOString());
 
@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
 
     // 4. Fetch last 15 detailed logs
     const { data: logs, error: logsError } = await supabase
-      .from("examai_logs")
+      .from("tse_logs")
       .select("*")
       .order("timestamp", { ascending: false })
       .limit(15);

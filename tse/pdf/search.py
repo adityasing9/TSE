@@ -2,12 +2,12 @@ import faiss
 import numpy as np
 from pathlib import Path
 from typing import List, Dict, Any
-from examai.pdf.processor import pdf_processor
-from examai.pdf.embeddings import embeddings_generator
-from examai.database import db
-from examai.utils.logger import logger
+from tse.pdf.processor import pdf_processor
+from tse.pdf.embeddings import embeddings_generator
+from tse.database import db
+from tse.utils.logger import logger
 
-INDEX_PATH = Path.home() / ".examai" / "faiss.index"
+INDEX_PATH = Path.home() / ".tse" / "faiss.index"
 
 class VectorSearchManager:
     def __init__(self):

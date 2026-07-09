@@ -5,7 +5,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from dotenv import load_dotenv, set_key
 
 # Ensure parent directories exist
-DATA_DIR = Path.home() / ".examai"
+DATA_DIR = Path.home() / ".tse"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 ENV_PATH = DATA_DIR / ".env"
 
@@ -13,12 +13,12 @@ ENV_PATH = DATA_DIR / ".env"
 if not ENV_PATH.exists():
     with open(ENV_PATH, "w", encoding="utf-8") as f:
         f.write(
-            "# ExamAI CLI Configuration\n"
+            "# TSE CLI Configuration\n"
             "DB_HOST=localhost\n"
             "DB_PORT=3306\n"
             "DB_USER=root\n"
             "DB_PASSWORD=\n"
-            "DB_NAME=examai\n"
+            "DB_NAME=tse\n"
             "OPENROUTER_API_KEY=\n"
             "GEMINI_API_KEY=\n"
             "OLLAMA_HOST=http://localhost:11434\n"
@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     db_port: int = int(os.getenv("DB_PORT", "3306"))
     db_user: str = os.getenv("DB_USER", "root")
     db_password: str = os.getenv("DB_PASSWORD", "")
-    db_name: str = os.getenv("DB_NAME", "examai")
+    db_name: str = os.getenv("DB_NAME", "tse")
     
     openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
     gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
